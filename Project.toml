@@ -1,6 +1,6 @@
 name = "TrafficAssignment"
 uuid = "735ffce8-66c7-5b61-a90f-89c46d1a79d5"
-repo = "https://github.com/chkwon/TrafficAssignment.jl.git"
+authors = ["Changhyun Kwon"]
 version = "0.6.4"
 
 [deps]
@@ -43,4 +43,4 @@ JuliaFormatter = "98e50ef6-434e-11e9-1051-2b60c6c9e899"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Aqua", "DelimitedFiles", "JET", "JuliaFormatter", "Test"]
+test = ["Aqua", "DelimitedFiles", "Documenter", "JET", "JuliaFormatter", "Test"]
