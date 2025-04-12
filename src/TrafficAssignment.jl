@@ -4,6 +4,7 @@ module TrafficAssignment
 using BinDeps: unpack_cmd
 using DataDeps: DataDeps, DataDep, @datadep_str
 using DataFrames
+using DocStringExtensions
 using Graphs
 using Optim
 using OrderedCollections
