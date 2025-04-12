@@ -20,19 +20,6 @@ function TA_dijkstra_shortest_paths(
     return state
 end
 
-function TA_dijkstra_shortest_paths(graph, travel_time, origin, init_node, term_node)
-    no_node = nv(graph)
-    no_arc = ne(graph)
-
-    distmx = Inf*ones(no_node, no_node)
-    for i in 1:no_arc
-        distmx[init_node[i], term_node[i]] = travel_time[i]
-    end
-
-    state = dijkstra_shortest_paths(graph, origin, distmx)
-    return state
-end
-
 function create_graph(init_node, term_node)
     @assert Base.length(init_node)==Base.length(term_node)
 
@@ -44,29 +31,6 @@ function create_graph(init_node, term_node)
         add_edge!(graph, init_node[i], term_node[i])
     end
     return graph
-end
-
-function get_vector(state, origin, destination, link_dic)
-    current = destination
-    parent = -1
-    x = zeros(Int, maximum(link_dic))
-
-    while parent != origin && origin != destination && current != 0
-        parent = state.parents[current]
-
-        # println("origin=$origin, destination=$destination, parent=$parent, current=$current")
-
-        if parent != 0
-            link_idx = link_dic[parent, current]
-            if link_idx != 0
-                x[link_idx] = 1
-            end
-        end
-
-        current = parent
-    end
-
-    return x
 end
 
 function add_demand_vector!(x, demand, state, origin, destination, link_dic)
