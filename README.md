@@ -27,7 +27,7 @@ And then you can solve the equilibrium problem and compute the total system trav
 
 ```jldoctest readme
 julia> flow = solve_frank_wolfe(problem; max_iteration=1000, verbose=false)
-24×24 SparseMatrixCSC{Float64, Int64} with 76 stored entries:
+24×24 SparseArrays.SparseMatrixCSC{Float64, Int64} with 76 stored entries:
 ⎡⠎⡡⡐⠀⠀⡠⠀⠀⠀⠀⠀⠀⎤
 ⎢⠐⠈⢊⡰⡁⠀⠀⢀⠠⠀⠀⠀⎥
 ⎢⠀⡠⠁⠈⠪⡢⡠⠒⠂⠀⠀⠀⎥
