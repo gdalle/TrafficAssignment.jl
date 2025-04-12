@@ -15,6 +15,7 @@ $(TYPEDFIELDS)
 @kwdef struct TrafficAssignmentProblem
     instance_name::String
 
+    # network table
     number_of_zones::Int
     number_of_nodes::Int
     first_thru_node::Int
@@ -31,30 +32,18 @@ $(TYPEDFIELDS)
     toll::Vector{Float64}
     link_type::Vector{Int}
 
+    # trips table
     total_od_flow::Float64
-
     travel_demand::Matrix{Float64}
     od_pairs::Vector{Tuple{Int,Int}}
 
+    # node table
+    X::Union{Nothing,Vector{Float64}}
+    Y::Union{Nothing,Vector{Float64}}
+
+    # cost parameters
     toll_factor::Float64
     distance_factor::Float64
-
-    best_objective::Float64
-end
-
-function DataFrames.DataFrame(td::TrafficAssignmentProblem)
-    return DataFrame(;
-        init_node=td.init_node,
-        term_node=td.term_node,
-        capacity=td.capacity,
-        link_length=td.link_length,
-        free_flow_time=td.free_flow_time,
-        b=td.b,
-        power=td.power,
-        speed_limit=td.speed_limit,
-        toll=td.toll,
-        link_type=td.link_type,
-    )
 end
 
 search_sc(s, c) = something(findfirst(isequal(c), s), 0)
@@ -93,17 +82,14 @@ $(SIGNATURES)
 function TrafficAssignmentProblem(
     instance_name::AbstractString,
     files::NamedTuple=instance_files(instance_name);
-    best_objective::Real=-1.0,
     toll_factor::Real=0.0,
     distance_factor::Real=0.0,
 )
-    (; net_file, trips_file) = files
+    (; net_file, trips_file, node_file) = files
     @assert ispath(net_file)
     @assert ispath(trips_file)
 
-    ##################################################
-    # Network Data
-    ##################################################
+    # network table
 
     number_of_zones = 0
     number_of_links = 0
@@ -166,9 +152,7 @@ function TrafficAssignmentProblem(
         end
     end
 
-    ##################################################
-    # Trip Table
-    ##################################################
+    # trips table
 
     number_of_zones_trip = 0
     total_od_flow = 0
@@ -218,6 +202,23 @@ function TrafficAssignmentProblem(
         end
     end
 
+    # node table
+
+    if !isnothing(node_file)
+        X = fill(NaN, number_of_nodes)
+        Y = fill(NaN, number_of_nodes)
+        coord_lines = readlines(node_file)
+        if startswith(lowercase(coord_lines[1]), "node")
+            coord_lines = @view(coord_lines[2:end])
+        end
+        coord_lines_split = split.(coord_lines, Ref(r"[\t ]+"))
+        X = parse.(Float64, getindex.(coord_lines_split, 2))
+        Y = parse.(Float64, getindex.(coord_lines_split, 3))
+    else
+        X = nothing
+        Y = nothing
+    end
+
     return TrafficAssignmentProblem(;
         instance_name,
         number_of_zones,
@@ -237,9 +238,10 @@ function TrafficAssignmentProblem(
         total_od_flow,
         travel_demand,
         od_pairs,
+        X,
+        Y,
         toll_factor,
         distance_factor,
-        best_objective,
     )
 end
 

@@ -2,6 +2,7 @@ using TrafficAssignment
 using Test, LinearAlgebra
 using DelimitedFiles
 using Aqua, Documenter, JET, JuliaFormatter
+using CairoMakie
 
 DocMeta.setdocmeta!(
     TrafficAssignment, :DocTestSetup, :(using TrafficAssignment); recursive=true
@@ -80,5 +81,9 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true
             solution_flow = Float64.(solution[:, 3])
             @test norm(link_volume - solution_flow) / norm(solution_flow) < 0.01
         end
+    end
+
+    @testset "Plotting" begin
+        plot(TrafficAssignmentProblem("SiouxFalls"))
     end
 end
