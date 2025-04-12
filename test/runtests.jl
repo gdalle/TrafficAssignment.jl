@@ -35,11 +35,11 @@ include("test_functions.jl")
     summarize_ta_data()
 
     data_time = time()
-    ta_data = load_ta_network("SiouxFalls")
+    ta_data = TrafficAssignmentProblem("SiouxFalls")
     println("Data Loading Completed, time:", time() - data_time, " seconds")
 
     @testset "Various FW Methods" begin
-        ta_data = load_ta_network("SiouxFalls")
+        ta_data = TrafficAssignmentProblem("SiouxFalls")
 
         @time link_volume, link_travel_time, objective = ta_frank_wolfe(
             ta_data; method=:bfw, step=:exact, log=:off, tol=1e-3, max_iter_no=5
@@ -58,7 +58,7 @@ include("test_functions.jl")
     end
 
     @testset "Testing Sioux Falls" begin
-        ta_data = load_ta_network("SiouxFalls")
+        ta_data = TrafficAssignmentProblem("SiouxFalls")
         @time link_volume, link_travel_time, objective = ta_frank_wolfe(
             ta_data; method=:cfw, step=:newton, log=:off, tol=1e-5, max_iter_no=50000
         )
@@ -68,7 +68,7 @@ include("test_functions.jl")
     end
 
     @testset "Testing Anaheim" begin
-        ta_data = load_ta_network("Anaheim")
+        ta_data = TrafficAssignmentProblem("Anaheim")
         @time link_volume, link_travel_time, objective = ta_frank_wolfe(
             ta_data; method=:cfw, step=:newton, log=:off, tol=1e-5, max_iter_no=50000
         )

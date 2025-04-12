@@ -9,7 +9,7 @@ function test_tntp()
                 @testset "$d" begin
                     try
                         read_ta_network(d)
-                        td = load_ta_network(d)
+                        td = TrafficAssignmentProblem(d)
                         @info "Network '$d' is OK."
                         @test td.network_name == d
                     catch e

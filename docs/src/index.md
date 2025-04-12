@@ -18,7 +18,7 @@ You can load networks from the [`TransportationNetworks` repository](https://git
 
 ```jldoctest readme
 using TrafficAssignment
-ta_data = load_ta_network("SiouxFalls")
+ta_data = TrafficAssignmentProblem("SiouxFalls")
 ta_data.number_of_zones
 
 # output

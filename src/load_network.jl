@@ -64,9 +64,8 @@ $(SIGNATURES)
 
 Return a named tuple `(; flow_file, net_file, node_file, trips_file)` containing the absolute paths to the 4 data tables of an instance.
 """
-function decompress_data(instance_name::AbstractString)
-    tntp_dir = datapath()
-    instance_dir = joinpath(tntp_dir, instance_name)
+function instance_files(instance_name::AbstractString)
+    instance_dir = datapath(instance_name)
     @assert ispath(instance_dir)
 
     flow_file = net_file = node_file = trips_file = nothing
@@ -91,30 +90,15 @@ end
 """
 $(SIGNATURES)
 """
-function load_ta_network(
-    instance_name; best_objective=-1.0, toll_factor=0.0, distance_factor=0.0
+function TrafficAssignmentProblem(
+    instance_name::AbstractString,
+    files=instance_files(instance_name);
+    best_objective::Real=-1.0,
+    toll_factor::Real=0.0,
+    distance_factor::Real=0.0,
 )
-    result = decompress_data(instance_name)
-    network_data_file, trip_table_file = result.net_file, result.trips_file
-
-    return load_ta_network(
-        instance_name,
-        network_data_file,
-        trip_table_file;
-        best_objective=best_objective,
-        toll_factor=toll_factor,
-        distance_factor=distance_factor,
-    )
-end
-
-function load_ta_network(
-    instance_name,
-    network_data_file,
-    trip_table_file;
-    best_objective=-1.0,
-    toll_factor=0.0,
-    distance_factor=0.0,
-)
+    network_data_file = files.net_file
+    trip_table_file = files.trips_file
     @assert ispath(network_data_file)
     @assert ispath(trip_table_file)
 
@@ -235,8 +219,7 @@ function load_ta_network(
         end
     end
 
-    # Preparing data to return
-    ta_data = TrafficAssignmentProblem(;
+    return TrafficAssignmentProblem(;
         instance_name,
         number_of_zones,
         number_of_nodes,
@@ -259,58 +242,48 @@ function load_ta_network(
         distance_factor,
         best_objective,
     )
-
-    return ta_data
-end # end of load_network function
-
-function read_ta_summary(network_data_file)
-    @assert ispath(network_data_file)
-
-    number_of_zones = 0
-    number_of_links = 0
-    number_of_nodes = 0
-    first_thru_node = 0
-
-    n = open(network_data_file, "r")
-
-    search_sc(s, c) = something(findfirst(isequal(c), s), 0)
-
-    while (line = readline(n)) != ""
-        if occursin("<NUMBER OF ZONES>", line)
-            number_of_zones = parse(Int, line[(search_sc(line, '>') + 1):end])
-        elseif occursin("<NUMBER OF NODES>", line)
-            number_of_nodes = parse(Int, line[(search_sc(line, '>') + 1):end])
-        elseif occursin("<FIRST THRU NODE>", line)
-            first_thru_node = parse(Int, line[(search_sc(line, '>') + 1):end])
-        elseif occursin("<NUMBER OF LINKS>", line)
-            number_of_links = parse(Int, line[(search_sc(line, '>') + 1):end])
-        elseif occursin("<END OF METADATA>", line)
-            break
-        end
-    end
-
-    return number_of_zones, number_of_links, number_of_nodes
 end
 
-function summarize_ta_data(; markdown=false)
-    data_dir = datapath()
+"""
+$(SIGNATURES)
 
-    # Test
-    df = DataFrame(; Network=String[], Zones=Int[], Links=Int[], Nodes=Int[])
-    dic = OrderedDict()
-    for d in readdir(data_dir)
-        if isdir(joinpath(data_dir, d))
-            try
-                network_data_file, trip_table_file = decompress_data(d)
-                number_of_zones, number_of_links, number_of_nodes = read_ta_summary(
-                    network_data_file
-                )
-                dic[d] = (number_of_zones, number_of_links, number_of_nodes)
-                push!(df, (d, number_of_zones, number_of_links, number_of_nodes))
-            catch
+Return a list of instance names.
+"""
+function list_instances()
+    data_dir = datapath()
+    names = String[]
+    for potential_name in readdir(data_dir)
+        isdir(joinpath(data_dir, potential_name)) || continue
+        for instance_file in readdir(joinpath(data_dir, potential_name))
+            if endswith(instance_file, ".tntp")
+                push!(names, potential_name)
+                break
             end
         end
     end
+    return names
+end
 
+"""
+$(SIGNATURES)
+
+Return a `DataFrame` summarizing the dimensions of all available instances.
+"""
+function summarize_instances()
+    df = DataFrame(; instance=String[], zones=Int[], nodes=Int[], links=Int[])
+    for instance in list_instances()
+        @show instance
+        problem = TrafficAssignmentProblem(instance)
+        (; number_of_zones, number_of_nodes, number_of_links) = problem
+        push!(
+            df,
+            (;
+                instance,
+                zones=number_of_zones,
+                nodes=number_of_nodes,
+                links=number_of_links,
+            ),
+        )
+    end
     return df
-end # end of summarize_ta_data
+end

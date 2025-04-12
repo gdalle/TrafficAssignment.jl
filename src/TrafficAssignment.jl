@@ -64,7 +64,7 @@ function datapath(instance_name::AbstractString)
     )
 end
 
-export load_ta_network,
+export TrafficAssignmentProblem,
     read_ta_network,
     summarize_ta_data,
     read_ta_summary,
