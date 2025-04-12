@@ -28,8 +28,8 @@ function __init__()
     datadep = DataDep(
         name,
         message,
-        remote_path;
-        hash,
+        remote_path,
+        hash;
         fetch_method=DataDeps.fetch_default,
         post_fetch_method=DataDeps.unpack,
     )
