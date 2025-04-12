@@ -128,16 +128,16 @@ function TrafficAssignmentProblem(
 
     @assert number_of_links > 0
 
-    init_node = Vector{Int}(undef, number_of_links)
-    term_node = Vector{Int}(undef, number_of_links)
-    capacity = Vector{Float64}(undef, number_of_links)
-    link_length = Vector{Float64}(undef, number_of_links)
-    free_flow_time = Vector{Float64}(undef, number_of_links)
-    b = Vector{Float64}(undef, number_of_links)
-    power = Vector{Float64}(undef, number_of_links)
-    speed_limit = Vector{Float64}(undef, number_of_links)
-    toll = Vector{Float64}(undef, number_of_links)
-    link_type = Vector{Int}(undef, number_of_links)
+    init_node = zeros(Int, number_of_links)
+    term_node = zeros(Int, number_of_links)
+    capacity = zeros(Float64, number_of_links)
+    link_length = zeros(Float64, number_of_links)
+    free_flow_time = zeros(Float64, number_of_links)
+    b = zeros(Float64, number_of_links)
+    power = zeros(Float64, number_of_links)
+    speed_limit = zeros(Float64, number_of_links)
+    toll = zeros(Float64, number_of_links)
+    link_type = zeros(Int, number_of_links)
 
     idx = 1
     while !eof(n)
@@ -188,7 +188,7 @@ function TrafficAssignmentProblem(
     @assert number_of_zones_trip == number_of_zones # Check if number_of_zone is same in both txt files
     @assert total_od_flow > 0
 
-    travel_demand = Matrix{Float64}(undef, number_of_zones, number_of_zones)
+    travel_demand = zeros(Float64, number_of_zones, number_of_zones)
     od_pairs = Tuple{Int,Int}[]
 
     origin = -1
