@@ -34,7 +34,7 @@ $(TYPEDFIELDS)
     total_od_flow::Float64
 
     travel_demand::Matrix{Float64}
-    od_pairs::Vector{Tuple{Int64,Int64}}
+    od_pairs::Vector{Tuple{Int,Int}}
 
     toll_factor::Float64
     distance_factor::Float64
@@ -70,13 +70,13 @@ function instance_files(instance_name::AbstractString)
 
     flow_file = net_file = node_file = trips_file = nothing
     for f in readdir(instance_dir; join=true)
-        if endswith(f, "_flow.tntp")
+        if occursin("_flow", lowercase(f)) && occursin(".tntp", lowercase(f))
             flow_file = f
-        elseif endswith(f, "_net.tntp")
+        elseif occursin("_net", lowercase(f)) && occursin(".tntp", lowercase(f))
             net_file = f
-        elseif endswith(f, "_node.tntp")
+        elseif occursin("_node", lowercase(f)) && occursin(".tntp", lowercase(f))
             node_file = f
-        elseif endswith(f, "_trips.tntp")
+        elseif occursin("_trips", lowercase(f)) && occursin(".tntp", lowercase(f))
             trips_file = f
         end
     end
@@ -92,15 +92,14 @@ $(SIGNATURES)
 """
 function TrafficAssignmentProblem(
     instance_name::AbstractString,
-    files=instance_files(instance_name);
+    files::NamedTuple=instance_files(instance_name);
     best_objective::Real=-1.0,
     toll_factor::Real=0.0,
     distance_factor::Real=0.0,
 )
-    network_data_file = files.net_file
-    trip_table_file = files.trips_file
-    @assert ispath(network_data_file)
-    @assert ispath(trip_table_file)
+    (; net_file, trips_file) = files
+    @assert ispath(net_file)
+    @assert ispath(trips_file)
 
     ##################################################
     # Network Data
@@ -111,7 +110,7 @@ function TrafficAssignmentProblem(
     number_of_nodes = 0
     first_thru_node = 0
 
-    n = open(network_data_file, "r")
+    n = open(net_file, "r")
 
     while (line = readline(n)) != ""
         if occursin("<NUMBER OF ZONES>", line)
@@ -129,16 +128,16 @@ function TrafficAssignmentProblem(
 
     @assert number_of_links > 0
 
-    init_node = Array{Int64}(undef, number_of_links)
-    term_node = Array{Int64}(undef, number_of_links)
-    capacity = zeros(number_of_links)
-    link_length = zeros(number_of_links)
-    free_flow_time = zeros(number_of_links)
-    b = zeros(number_of_links)
-    power = zeros(number_of_links)
-    speed_limit = zeros(number_of_links)
-    toll = zeros(number_of_links)
-    link_type = Array{Int64}(undef, number_of_links)
+    init_node = Vector{Int}(undef, number_of_links)
+    term_node = Vector{Int}(undef, number_of_links)
+    capacity = Vector{Float64}(undef, number_of_links)
+    link_length = Vector{Float64}(undef, number_of_links)
+    free_flow_time = Vector{Float64}(undef, number_of_links)
+    b = Vector{Float64}(undef, number_of_links)
+    power = Vector{Float64}(undef, number_of_links)
+    speed_limit = Vector{Float64}(undef, number_of_links)
+    toll = Vector{Float64}(undef, number_of_links)
+    link_type = Vector{Int}(undef, number_of_links)
 
     idx = 1
     while !eof(n)
@@ -152,8 +151,8 @@ function TrafficAssignmentProblem(
             line = replace(line, ";" => "")
 
             numbers = split(line)
-            init_node[idx] = parse(Int64, numbers[1])
-            term_node[idx] = parse(Int64, numbers[2])
+            init_node[idx] = parse(Int, numbers[1])
+            term_node[idx] = parse(Int, numbers[2])
             capacity[idx] = parse(Float64, numbers[3])
             link_length[idx] = parse(Float64, numbers[4])
             free_flow_time[idx] = parse(Float64, numbers[5])
@@ -174,7 +173,7 @@ function TrafficAssignmentProblem(
     number_of_zones_trip = 0
     total_od_flow = 0
 
-    f = open(trip_table_file, "r")
+    f = open(trips_file, "r")
 
     while (line = readline(f)) != ""
         if occursin("<NUMBER OF ZONES>", line)
@@ -189,8 +188,8 @@ function TrafficAssignmentProblem(
     @assert number_of_zones_trip == number_of_zones # Check if number_of_zone is same in both txt files
     @assert total_od_flow > 0
 
-    travel_demand = zeros(number_of_zones, number_of_zones)
-    od_pairs = Array{Tuple{Int64,Int64}}(undef, 0)
+    travel_demand = Matrix{Float64}(undef, number_of_zones, number_of_zones)
+    od_pairs = Tuple{Int,Int}[]
 
     origin = -1
 
@@ -207,7 +206,7 @@ function TrafficAssignmentProblem(
             for i in 1:size(pairs)[1]
                 if occursin(":", pairs[i])
                     pair = split(pairs[i], ":")
-                    destination = parse(Int64, strip(pair[1]))
+                    destination = parse(Int, strip(pair[1]))
                     od_flow = parse(Float64, strip(pair[2]))
 
                     # println("origin=$origin, destination=$destination, flow=$od_flow")
@@ -247,7 +246,7 @@ end
 """
 $(SIGNATURES)
 
-Return a list of instance names.
+Return a list of available instance names.
 """
 function list_instances()
     data_dir = datapath()
@@ -270,15 +269,22 @@ $(SIGNATURES)
 Return a `DataFrame` summarizing the dimensions of all available instances.
 """
 function summarize_instances()
-    df = DataFrame(; instance=String[], zones=Int[], nodes=Int[], links=Int[])
+    df = DataFrame(; instance=String[], valid=Bool[], zones=Int[], nodes=Int[], links=Int[])
     for instance in list_instances()
-        @show instance
-        problem = TrafficAssignmentProblem(instance)
-        (; number_of_zones, number_of_nodes, number_of_links) = problem
+        valid = false
+        number_of_zones, number_of_nodes, number_of_links = (-1, -1, -1)
+        try
+            problem = TrafficAssignmentProblem(instance)
+            valid = true
+            (; number_of_zones, number_of_nodes, number_of_links) = problem
+        catch e
+            # nothing
+        end
         push!(
             df,
             (;
                 instance,
+                valid,
                 zones=number_of_zones,
                 nodes=number_of_nodes,
                 links=number_of_links,

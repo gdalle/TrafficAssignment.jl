@@ -111,7 +111,9 @@ function hessian_diag(x::Vector{Float64}, td::TrafficAssignmentProblem)
     #Link travel time = free flow time * ( 1 + b * (flow/capacity)^Power ).
 end
 
-function all_or_nothing_single(travel_time::Vector{Float64}, td::TrafficAssignmentProblem, graph, link_dic)
+function all_or_nothing_single(
+    travel_time::Vector{Float64}, td::TrafficAssignmentProblem, graph, link_dic
+)
     local state::Graphs.DijkstraState{Float64,Int}
     x = zeros(size(td.init_node))
 
@@ -131,7 +133,9 @@ function all_or_nothing_single(travel_time::Vector{Float64}, td::TrafficAssignme
     return x
 end
 
-function all_or_nothing(travel_time::Vector{Float64}, td::TrafficAssignmentProblem, graph, link_dic)
+function all_or_nothing(
+    travel_time::Vector{Float64}, td::TrafficAssignmentProblem, graph, link_dic
+)
     # if nprocs() > 1 # if multiple CPU processes are available
     #     return all_or_nothing_parallel(travel_time, td, graph, link_dic)
     # else
@@ -159,8 +163,13 @@ This function implements methods to find traffic equilibrium flows: currently, F
 
   - Mitradjieva, M., & Lindberg, P. O. (2013). [The Stiff Is Moving-Conjugate Direction Frank-Wolfe Methods with Applications to Traffic Assignment](http://pubsonline.informs.org/doi/abs/10.1287/trsc.1120.0409). *Transportation Science*, 47(2), 280-293.
 """
-function ta_frank_wolfe(
-    td::TrafficAssignmentProblem; method=:bfw, max_iter_no=2000, step=:exact, log=:off, tol=1e-3
+function solve_frank_wolfe(
+    td::TrafficAssignmentProblem;
+    method=:bfw,
+    max_iter_no=2000,
+    step=:exact,
+    log=:off,
+    tol=1e-3,
 )
     setup_time = time()
 

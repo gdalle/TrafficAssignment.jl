@@ -64,12 +64,6 @@ function datapath(instance_name::AbstractString)
     )
 end
 
-export TrafficAssignmentProblem,
-    read_ta_network,
-    summarize_ta_data,
-    read_ta_summary,
-    net_dataframe,
-    ta_frank_wolfe,
-    TrafficAssignmentProblem
+export TrafficAssignmentProblem, list_instances, summarize_instances, solve_frank_wolfe
 
 end # module
