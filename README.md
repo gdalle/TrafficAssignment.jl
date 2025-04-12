@@ -14,7 +14,7 @@ To install the latest development version, run this in your Julia Pkg REPL:
 pkg> add https://github.com/gdalle/TrafficAssignment.jl
 ```
 
-You can then load networks from the [`TransportationNetworks` repository](https://github.com/bstabler/TransportationNetworks):
+You can easily load networks from the [`TransportationNetworks` repository](https://github.com/bstabler/TransportationNetworks):
 
 ```jldoctest readme
 using TrafficAssignment
@@ -26,16 +26,11 @@ ta_data.number_of_zones
 24
 ```
 
-And then you can solve the equilibrium problem:
-
-```jldoctest readme
-link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, log="off", tol=1e-2)
-```
-
-The total system travel time can be simply computed as:
+And then you can solve the equilibrium problem and compute the total system travel time:
 
 ```jldoctest readme
 using LinearAlgebra
+link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, log="off", tol=1e-2)
 system_travel_time = dot(link_travel_time, link_flow)
 
 # output
