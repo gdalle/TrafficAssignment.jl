@@ -63,33 +63,22 @@ search_sc(s, c) = something(findfirst(isequal(c), s), 0)
 $(SIGNATURES)
 
 Return a named tuple `(; flow_file, net_file, node_file, trips_file)` containing the absolute paths to the 4 data tables of an instance.
-
-If the instance directory contains `.zip` files, they will be decompressed.
 """
 function decompress_data(instance_name::AbstractString)
     tntp_dir = datapath()
     instance_dir = joinpath(tntp_dir, instance_name)
     @assert ispath(instance_dir)
 
-    # decompress
-    for f in readdir(instance_dir)
-        if endswith(lowercase(f), ".zip")
-            zipfile = joinpath(instance_dir, f)
-            run(unpack_cmd(zipfile, instance_dir, ".zip", ""))
-        end
-    end
-
-    # read four tables
     flow_file = net_file = node_file = trips_file = nothing
-    for f in readdir(instance_dir)
-        if endswith(lowercase(f), "_flow.tntp")
-            flow_file = joinpath(instance_dir, f)
-        elseif endswith(lowercase(f), "_net.tntp")
-            net_file = joinpath(instance_dir, f)
-        elseif endswith(lowercase(f), "_node.tntp")
-            node_file = joinpath(instance_dir, f)
-        elseif endswith(lowercase(f), "_trips.tntp")
-            trips_file = joinpath(instance_dir, f)
+    for f in readdir(instance_dir; join=true)
+        if endswith(f, "_flow.tntp")
+            flow_file = f
+        elseif endswith(f, "_net.tntp")
+            net_file = f
+        elseif endswith(f, "_node.tntp")
+            node_file = f
+        elseif endswith(f, "_trips.tntp")
+            trips_file = f
         end
     end
 
@@ -105,7 +94,8 @@ $(SIGNATURES)
 function load_ta_network(
     instance_name; best_objective=-1.0, toll_factor=0.0, distance_factor=0.0
 )
-    network_data_file, trip_table_file = decompress_data(instance_name)
+    result = decompress_data(instance_name)
+    network_data_file, trip_table_file = result.net_file, result.trips_file
 
     return load_ta_network(
         instance_name,

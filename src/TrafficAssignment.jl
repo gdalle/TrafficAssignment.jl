@@ -31,15 +31,36 @@ function __init__()
         remote_path,
         hash;
         fetch_method=DataDeps.fetch_default,
-        post_fetch_method=DataDeps.unpack,
+        post_fetch_method=post_fetch_method,
     )
     DataDeps.register(datadep)
     return nothing
 end
 
+function post_fetch_method(zip_file)
+    DataDeps.unpack(zip_file; keep_originals=false)
+    # decompress potential zip files inside each instance
+    for instance_dir in readdir("TransportationNetworks-$LAST_COMMIT_SHA"; join=true)
+        isdir(instance_dir) || continue
+        for potential_zip_file in readdir(instance_dir; join=true)
+            if endswith(potential_zip_file, ".zip")
+                run(unpack_cmd(potential_zip_file, instance_dir, ".zip", ""))
+            end
+        end
+    end
+end
+
 function datapath()
     return joinpath(
         datadep"TransportationNetworks", "TransportationNetworks-$LAST_COMMIT_SHA"
+    )
+end
+
+function datapath(instance_name::AbstractString)
+    return joinpath(
+        datadep"TransportationNetworks",
+        "TransportationNetworks-$LAST_COMMIT_SHA",
+        instance_name,
     )
 end
 
