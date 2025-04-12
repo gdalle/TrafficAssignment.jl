@@ -95,10 +95,10 @@ $(SIGNATURES)
 
 User-friendly constructor for [`TrafficAssignmentProblem`](@ref).
 
-The provided `instance_name` must be one of the subfolders in <https://github.com/bstabler/TransportationNetworks>.
+The provided `instance_name` must be one of the subfolders in [https://github.com/bstabler/TransportationNetworks](https://github.com/bstabler/TransportationNetworks).
 
 When you run this function for the first time, the DataDeps package will ask you to confirm download.
-    If you want to skip this check, for instance during CI, set the environment variable `ENV["DATADEPS_ALWAYS_ACCEPT"] = true`.
+If you want to skip this check, for instance during CI, set the environment variable `ENV["DATADEPS_ALWAYS_ACCEPT"] = true`.
 """
 function TrafficAssignmentProblem(
     instance_name::AbstractString,
