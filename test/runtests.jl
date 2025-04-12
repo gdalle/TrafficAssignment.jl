@@ -47,12 +47,12 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true
         )
         @test abs(objective - 4.963799502172654e6) < 1e6
 
-        @time link_volume, link_travel_time, objective = solve_frank_wolfe(
+        link_volume, link_travel_time, objective = solve_frank_wolfe(
             problem; method=:cfw, step=:newton, log=:off, tol=1e-3, max_iter_no=5
         )
         @test abs(objective - 4.963799502172654e6) < 1e6
 
-        @time link_volume, link_travel_time, objective = solve_frank_wolfe(
+        link_volume, link_travel_time, objective = solve_frank_wolfe(
             problem; method=:fw, step=:exact, log=:off, tol=1e-3, max_iter_no=5
         )
         @test abs(objective - 4.963799502172654e6) < 1e6
