@@ -12,29 +12,29 @@ $(TYPEDEF)
 
 $(TYPEDFIELDS)
 """
-@kwdef mutable struct TA_Data
-    network_name::String
+@kwdef struct TrafficAssignmentProblem
+    instance_name::String
 
     number_of_zones::Int
     number_of_nodes::Int
     first_thru_node::Int
     number_of_links::Int
 
-    init_node::Array{Int,1}
-    term_node::Array{Int,1}
-    capacity::Array{Float64,1}
-    link_length::Array{Float64,1}
-    free_flow_time::Array{Float64,1}
-    b::Array{Float64,1}
-    power::Array{Float64,1}
-    speed_limit::Array{Float64,1}
-    toll::Array{Float64,1}
-    link_type::Array{Int64,1}
+    init_node::Vector{Int}
+    term_node::Vector{Int}
+    capacity::Vector{Float64}
+    link_length::Vector{Float64}
+    free_flow_time::Vector{Float64}
+    b::Vector{Float64}
+    power::Vector{Float64}
+    speed_limit::Vector{Float64}
+    toll::Vector{Float64}
+    link_type::Vector{Int}
 
     total_od_flow::Float64
 
-    travel_demand::Array{Float64,2}
-    od_pairs::Array{Tuple{Int64,Int64},1}
+    travel_demand::Matrix{Float64}
+    od_pairs::Vector{Tuple{Int64,Int64}}
 
     toll_factor::Float64
     distance_factor::Float64
@@ -42,62 +42,73 @@ $(TYPEDFIELDS)
     best_objective::Float64
 end
 
-function DataFrames.DataFrame(td::TA_Data)
+function DataFrames.DataFrame(td::TrafficAssignmentProblem)
     return DataFrame(;
-        init_node = td.init_node,
-        term_node = td.term_node,
-        capacity = td.capacity,
-        link_length = td.link_length,
-        free_flow_time = td.free_flow_time,
-        b = td.b,
-        power = td.power,
-        speed_limit = td.speed_limit,
-        toll = td.toll,
-        link_type = td.link_type
+        init_node=td.init_node,
+        term_node=td.term_node,
+        capacity=td.capacity,
+        link_length=td.link_length,
+        free_flow_time=td.free_flow_time,
+        b=td.b,
+        power=td.power,
+        speed_limit=td.speed_limit,
+        toll=td.toll,
+        link_type=td.link_type,
     )
 end
 
 search_sc(s, c) = something(findfirst(isequal(c), s), 0)
 
-function read_ta_network(network_name)
+"""
+$(SIGNATURES)
+
+Return a named tuple `(; flow_file, net_file, node_file, trips_file)` containing the absolute paths to the 4 data tables of an instance.
+
+If the instance directory contains `.zip` files, they will be decompressed.
+"""
+function decompress_data(instance_name::AbstractString)
     tntp_dir = datapath()
-    network_dir = joinpath(tntp_dir, network_name)
-    @assert ispath(network_dir)
+    instance_dir = joinpath(tntp_dir, instance_name)
+    @assert ispath(instance_dir)
 
-    network_data_file = ""
-    trip_table_file = ""
-
-    for f in readdir(network_dir)
-        if occursin(".zip", lowercase(f))
-            zipfile = joinpath(network_dir, f)
-            run(unpack_cmd(zipfile, network_dir, ".zip", ""))
+    # decompress
+    for f in readdir(instance_dir)
+        if endswith(lowercase(f), ".zip")
+            zipfile = joinpath(instance_dir, f)
+            run(unpack_cmd(zipfile, instance_dir, ".zip", ""))
         end
     end
 
-    for f in readdir(network_dir)
-        if occursin("_net", lowercase(f)) && occursin(".tntp", lowercase(f))
-            network_data_file = joinpath(network_dir, f)
-        elseif occursin("_trips", lowercase(f)) && occursin(".tntp", lowercase(f))
-            trip_table_file = joinpath(network_dir, f)
+    # read four tables
+    flow_file = net_file = node_file = trips_file = nothing
+    for f in readdir(instance_dir)
+        if endswith(lowercase(f), "_flow.tntp")
+            flow_file = joinpath(instance_dir, f)
+        elseif endswith(lowercase(f), "_net.tntp")
+            net_file = joinpath(instance_dir, f)
+        elseif endswith(lowercase(f), "_node.tntp")
+            node_file = joinpath(instance_dir, f)
+        elseif endswith(lowercase(f), "_trips.tntp")
+            trips_file = joinpath(instance_dir, f)
         end
     end
 
-    @assert network_data_file != ""
-    @assert trip_table_file != ""
+    @assert !isnothing(net_file)
+    @assert !isnothing(trips_file)
 
-    return network_data_file, trip_table_file
+    return (; flow_file, net_file, node_file, trips_file)
 end
 
 """
 $(SIGNATURES)
 """
 function load_ta_network(
-    network_name; best_objective=-1.0, toll_factor=0.0, distance_factor=0.0
+    instance_name; best_objective=-1.0, toll_factor=0.0, distance_factor=0.0
 )
-    network_data_file, trip_table_file = read_ta_network(network_name)
+    network_data_file, trip_table_file = decompress_data(instance_name)
 
-    load_ta_network(
-        network_name,
+    return load_ta_network(
+        instance_name,
         network_data_file,
         trip_table_file;
         best_objective=best_objective,
@@ -107,7 +118,7 @@ function load_ta_network(
 end
 
 function load_ta_network(
-    network_name,
+    instance_name,
     network_data_file,
     trip_table_file;
     best_objective=-1.0,
@@ -128,7 +139,7 @@ function load_ta_network(
 
     n = open(network_data_file, "r")
 
-    while (line=readline(n)) != ""
+    while (line = readline(n)) != ""
         if occursin("<NUMBER OF ZONES>", line)
             number_of_zones = parse(Int, line[(search_sc(line, '>') + 1):end])
         elseif occursin("<NUMBER OF NODES>", line)
@@ -191,7 +202,7 @@ function load_ta_network(
 
     f = open(trip_table_file, "r")
 
-    while (line=readline(f)) != ""
+    while (line = readline(f)) != ""
         if occursin("<NUMBER OF ZONES>", line)
             number_of_zones_trip = parse(Int, line[(search_sc(line, '>') + 1):end])
         elseif occursin("<TOTAL OD FLOW>", line)
@@ -235,8 +246,8 @@ function load_ta_network(
     end
 
     # Preparing data to return
-    ta_data = TA_Data(
-        network_name,
+    ta_data = TrafficAssignmentProblem(;
+        instance_name,
         number_of_zones,
         number_of_nodes,
         first_thru_node,
@@ -274,7 +285,7 @@ function read_ta_summary(network_data_file)
 
     search_sc(s, c) = something(findfirst(isequal(c), s), 0)
 
-    while (line=readline(n)) != ""
+    while (line = readline(n)) != ""
         if occursin("<NUMBER OF ZONES>", line)
             number_of_zones = parse(Int, line[(search_sc(line, '>') + 1):end])
         elseif occursin("<NUMBER OF NODES>", line)
@@ -300,7 +311,7 @@ function summarize_ta_data(; markdown=false)
     for d in readdir(data_dir)
         if isdir(joinpath(data_dir, d))
             try
-                network_data_file, trip_table_file = read_ta_network(d)
+                network_data_file, trip_table_file = decompress_data(d)
                 number_of_zones, number_of_links, number_of_nodes = read_ta_summary(
                     network_data_file
                 )
@@ -311,44 +322,5 @@ function summarize_ta_data(; markdown=false)
         end
     end
 
-    max_len = [0, 0, 0, 0]
-    for net in sort(dic)
-        max_len[1] = max(length(net[1]), max_len[1])
-        max_len[2] = max(length(digits(net[2][1])), max_len[2])
-        max_len[3] = max(length(digits(net[2][2])), max_len[3])
-        max_len[4] = max(length(digits(net[2][3])), max_len[4])
-    end
-
-    function format(mlen, val)
-        len = 0
-        str = ""
-        if isa(val, String)
-            len = length(val)
-            str = val * " "^(mlen - len + 1)
-        elseif isa(val, Number)
-            len = length(digits(val))
-            str = " "^(mlen - len + 1) * string(val)
-        end
-        return str
-    end
-
-    if markdown
-        println("-"^(17+sum(max_len)))
-        println(
-            "| $(format(max_len[1],"Network")) | $(format(max_len[2],"Zones")) | $(format(max_len[3],"Links")) | $(format(max_len[4],"Nodes")) |",
-        )
-        println(
-            "| $(format(max_len[1],":---")) | $(format(max_len[2],"---:")) | $(format(max_len[3],"---:")) | $(format(max_len[4],"---:")) |",
-        )
-        for net in sort(dic)
-            println(
-                "| $(format(max_len[1],net[1])) | $(format(max_len[2],net[2][1])) | $(format(max_len[3],net[2][2])) | $(format(max_len[4],net[2][3])) |",
-            )
-        end
-        println("-"^(17+sum(max_len)))
-    end
-
-    if !markdown
-        return df
-    end
+    return df
 end # end of summarize_ta_data

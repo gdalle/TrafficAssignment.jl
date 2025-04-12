@@ -49,6 +49,6 @@ export load_ta_network,
     read_ta_summary,
     net_dataframe,
     ta_frank_wolfe,
-    TA_Data
+    TrafficAssignmentProblem
 
 end # module
