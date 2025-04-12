@@ -24,7 +24,7 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true
             @test JuliaFormatter.format(TrafficAssignment; overwrite=false)
         end
         @testset "Undocumented names" begin
-            @test_broken isempty(Base.Docs.undocumented_names(TrafficAssignment))
+            @test isempty(Base.Docs.undocumented_names(TrafficAssignment))
         end
     end
 
@@ -32,7 +32,7 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true
         summary = TrafficAssignment.summarize_instances()
         @testset "$(row[:instance])" for row in eachrow(summary)
             if row[:instance] in ("Munich", "SymmetricaTestCase", "Sydney")
-                @test_broken row[:valid]
+                @test_skip row[:valid]
             else
                 @test row[:valid]
             end

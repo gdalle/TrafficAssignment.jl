@@ -1,3 +1,8 @@
+"""
+    TrafficAssignment
+
+A Julia package for studying traffic assignment problems, using data from <https://github.com/bstabler/TransportationNetworks>.
+"""
 module TrafficAssignment
 
 # outside packages
