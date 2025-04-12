@@ -22,6 +22,7 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 [compat]
 Aqua = "0.8.11"
 BinDeps = "1.0.2"
+CairoMakie = "0.13.4"
 CSV = "0.10.15"
 DataDeps = "0.7.13"
 DataFrames = "1.7"

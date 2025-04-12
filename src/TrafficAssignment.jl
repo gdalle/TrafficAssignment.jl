@@ -75,6 +75,6 @@ end
 export TrafficAssignmentProblem
 export list_instances, summarize_instances
 export solve_frank_wolfe
-export plot
+export plot_network
 
 end # module

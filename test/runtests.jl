@@ -84,6 +84,6 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true
     end
 
     @testset "Plotting" begin
-        plot(TrafficAssignmentProblem("SiouxFalls"))
+        plot_network(TrafficAssignmentProblem("SiouxFalls"))
     end
 end

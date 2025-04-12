@@ -1,4 +1,11 @@
-function plot(problem::TrafficAssignmentProblem)
+"""
+$(SIGNATURES)
+
+Plot a transportation network with Makie.
+
+This function requires loading one of Makie's backends beforehand.
+"""
+function plot_network(problem::TrafficAssignmentProblem)
     @assert !isnothing(problem.X)
     @assert !isnothing(problem.Y)
     (; instance_name, number_of_nodes, number_of_links, X, Y, init_node, term_node) =
