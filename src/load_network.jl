@@ -12,7 +12,7 @@ $(TYPEDEF)
 
 $(TYPEDFIELDS)
 """
-mutable struct TA_Data
+@kwdef mutable struct TA_Data
     network_name::String
 
     number_of_zones::Int
@@ -42,19 +42,19 @@ mutable struct TA_Data
     best_objective::Float64
 end
 
-function net_dataframe(td::TA_Data)
-    df = DataFrame()
-    df.init_node = td.init_node
-    df.term_node = td.term_node
-    df.capacity = td.capacity
-    df.link_length = td.link_length
-    df.free_flow_time = td.free_flow_time
-    df.b = td.b
-    df.power = td.power
-    df.speed_limit = td.speed_limit
-    df.toll = td.toll
-    df.link_type = td.link_type
-    return df
+function DataFrames.DataFrame(td::TA_Data)
+    return DataFrame(;
+        init_node = td.init_node,
+        term_node = td.term_node,
+        capacity = td.capacity,
+        link_length = td.link_length,
+        free_flow_time = td.free_flow_time,
+        b = td.b,
+        power = td.power,
+        speed_limit = td.speed_limit,
+        toll = td.toll,
+        link_type = td.link_type
+    )
 end
 
 search_sc(s, c) = something(findfirst(isequal(c), s), 0)
@@ -71,7 +71,6 @@ function read_ta_network(network_name)
         if occursin(".zip", lowercase(f))
             zipfile = joinpath(network_dir, f)
             run(unpack_cmd(zipfile, network_dir, ".zip", ""))
-            rm(zipfile)
         end
     end
 
