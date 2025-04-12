@@ -24,7 +24,9 @@ ENV["DATADEPS_ALWAYS_ACCEPT"] = true
             @test JuliaFormatter.format(TrafficAssignment; overwrite=false)
         end
         @testset "Undocumented names" begin
-            @test isempty(Base.Docs.undocumented_names(TrafficAssignment))
+            if isdefined(Base.Docs, :undocumented_names)
+                @test isempty(Base.Docs.undocumented_names(TrafficAssignment))
+            end
         end
     end
 
