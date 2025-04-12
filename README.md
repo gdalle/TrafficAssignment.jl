@@ -31,11 +31,11 @@ And then you can solve the equilibrium problem and compute the total system trav
 ```jldoctest readme
 using LinearAlgebra
 link_flow, link_travel_time, objective = ta_frank_wolfe(ta_data, log="off", tol=1e-2)
-system_travel_time = dot(link_travel_time, link_flow)
+system_travel_time = round(dot(link_travel_time, link_flow); sigdigits=3)
 
 # output
 
-7.467895288156025e6
+7.47e6
 ```
 
 ## Credits
