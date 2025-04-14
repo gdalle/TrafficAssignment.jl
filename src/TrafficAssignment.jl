@@ -15,7 +15,7 @@ using BinDeps: unpack_cmd
 using CSV: CSV
 using DataDeps: DataDeps, DataDep, @datadep_str
 using DataFrames
-using DataFramesMeta: @rsubset
+using DataFramesMeta
 using DocStringExtensions
 using FrankWolfe
 using Graphs

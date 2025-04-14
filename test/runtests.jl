@@ -41,7 +41,7 @@ reldist(a, b) = norm(a - b) / norm(a)
         @test TA.nb_zones(problem) == 38
         @test startswith(string(problem), "Traffic")
 
-        problem = TrafficAssignmentProblem("UnifiedTrafficDataset", "01_San_Francisco")
+        problem = TrafficAssignmentProblem("UnifiedTrafficDataset", "San Francisco")
         @test TA.nb_nodes(problem) == 4986
         @test TA.nb_links(problem) == 18002
         @test TA.nb_zones(problem) == 194

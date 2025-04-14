@@ -53,7 +53,13 @@ function _instance_files(::Val{:UnifiedTrafficDataset}, instance_name)
         instance_dir, "01_Input_data", "$(underscored_instance_name)_link.csv"
     )
     od_file = joinpath(instance_dir, "01_Input_data", "$(underscored_instance_name)_od.csv")
-    return (; node_file, link_file, od_file)
+    solution_network_file = joinpath(instance_dir, "03_AequilibraE_results", "network.csv")
+    solution_assignment_file = joinpath(
+        instance_dir, "03_AequilibraE_results", "assignment_result.csv"
+    )
+    return (;
+        node_file, link_file, od_file, solution_network_file, solution_assignment_file
+    )
 end
 
 """
@@ -306,10 +312,16 @@ function _TrafficAssignmentProblem(
     link_df[!, :Free_Flow_Time] =
         (60 / 1000) .* link_df[!, :Length] ./ link_df[!, :Free_Speed]
     link_df = leftjoin(
-        link_df, node_df[:, [1, 5]]; on=:From_Node_ID => :Node_ID, renamecols="" => "_From"
+        link_df,
+        @select(node_df, :Node_ID, :New_Node_ID);
+        on=:From_Node_ID => :Node_ID,
+        renamecols="" => "_From",
     )
     link_df = leftjoin(
-        link_df, node_df[:, [1, 5]]; on=:To_Node_ID => :Node_ID, renamecols="" => "_To"
+        link_df,
+        @select(node_df, :Node_ID, :New_Node_ID);
+        on=:To_Node_ID => :Node_ID,
+        renamecols="" => "_To",
     )
 
     nb_links = size(link_df, 1)
@@ -337,13 +349,46 @@ function _TrafficAssignmentProblem(
 
     od_df = DataFrame(CSV.File(files.od_file))
 
-    od_df = leftjoin(od_df, node_df[:, [1, 5]]; on=:O_ID => :Node_ID, renamecols="" => "_O")
-    od_df = leftjoin(od_df, node_df[:, [1, 5]]; on=:D_ID => :Node_ID, renamecols="" => "_D")
+    od_df = leftjoin(
+        od_df,
+        @select(node_df, :Node_ID, :New_Node_ID);
+        on=:O_ID => :Node_ID,
+        renamecols="" => "_O",
+    )
+    od_df = leftjoin(
+        od_df,
+        @select(node_df, :Node_ID, :New_Node_ID);
+        on=:D_ID => :Node_ID,
+        renamecols="" => "_D",
+    )
 
     demand = Dict(
         collect(zip(od_df[!, :New_Node_ID_O], od_df[!, :New_Node_ID_D])) .=>
             od_df[!, :OD_Number],
     )
+
+    # solution
+
+    sol_network_df = DataFrame(CSV.File(files.solution_network_file))
+    sol_assignment_df = DataFrame(CSV.File(files.solution_assignment_file))
+    sol_df = leftjoin(sol_assignment_df, sol_network_df; on=:link_id)
+    sol_df = leftjoin(
+        sol_df,
+        @select(node_df, :Node_ID, :New_Node_ID);
+        on=:a_node => :Node_ID,
+        renamecols="" => "_a_node",
+    )
+    sol_df = leftjoin(
+        sol_df,
+        @select(node_df, :Node_ID, :New_Node_ID);
+        on=:b_node => :Node_ID,
+        renamecols="" => "_b_node",
+    )
+    A = sol_df[!, :New_Node_ID_a_node]
+    B = sol_df[!, :New_Node_ID_b_node]
+    VAB = coalesce.(sol_df[!, :matrix_ab], 0.0)
+    VBA = coalesce.(sol_df[!, :matrix_ba], 0.0)
+    optimal_flow = dropzeros(sparse(A, B, VAB, n, n)) + dropzeros(sparse(B, A, VBA, n, n))
 
     return TrafficAssignmentProblem(;
         dataset_name="UnifiedTrafficDataset",
@@ -370,7 +415,7 @@ function _TrafficAssignmentProblem(
         toll_factor=missing,
         distance_factor=missing,
         # solution
-        optimal_flow=missing,
+        optimal_flow,
     )
 end
 
