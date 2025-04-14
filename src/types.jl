@@ -37,7 +37,7 @@ $(TYPEDFIELDS)
     TF<:Union{Number,Missing},
     DF<:Union{Number,Missing},
 }
-    "name of the dataset, one of $DATASET_NAMES"
+    "name of the dataset, one of `$DATASET_NAMES`"
     dataset_name::String
     "name of the instance (subfolder inside the dataset)"
     instance_name::String

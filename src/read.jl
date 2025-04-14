@@ -79,6 +79,8 @@ end
 
 User-friendly constructor for [`TrafficAssignmentProblem`](@ref).
 
+The dataset must be one of `$DATASET_NAMES`, the instance can be chosen from [`list_instances`](@ref).
+
 !!! tip
 
     When you run this function for the first time, the DataDeps package will ask you to confirm download.

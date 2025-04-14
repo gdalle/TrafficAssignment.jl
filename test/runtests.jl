@@ -51,7 +51,7 @@ reldist(a, b) = norm(a - b) / norm(a)
             "UnifiedTrafficDataset", "San Francisco"; solution="TransCAD"
         )
         pb2 = TrafficAssignmentProblem(
-            "UnifiedTrafficDataset", "San Francisco"; solution="AequilibraE"
+            "UnifiedTrafficDataset", "San Francisco"; solution="AequilibriaE"
         )
     end
 
@@ -86,7 +86,7 @@ reldist(a, b) = norm(a - b) / norm(a)
 
     @testset "Plotting" begin
         pb = TrafficAssignmentProblem("TransportationNetworks", "SiouxFalls")
-        plot_network(pb, pb.optimal_flow)
+        plot_network(pb, pb.optimal_flow; nodes=true)
         if VERSION >= v"1.11"
             using Pkg
             Pkg.add("Tyler")

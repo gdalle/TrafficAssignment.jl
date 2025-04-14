@@ -37,7 +37,6 @@ include("solve.jl")
 include("plot.jl")
 
 export TrafficAssignmentProblem
-export datapath
 export nb_nodes, nb_links, nb_zones
 export list_instances, summarize_instances
 export solve_frank_wolfe, social_cost
