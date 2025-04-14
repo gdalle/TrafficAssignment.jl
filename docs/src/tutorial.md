@@ -30,7 +30,7 @@ problem = TrafficAssignmentProblem(dataset_name, instance_name)
 You can visualize instances as follows:
 
 ```@example tuto
-plot_network(problem; zones=false, tiles=true)
+plot_network(problem; nodes=true, zones=false, tiles=true)
 ```
 
 ## Solution

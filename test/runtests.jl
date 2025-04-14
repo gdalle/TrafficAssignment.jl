@@ -46,6 +46,13 @@ reldist(a, b) = norm(a - b) / norm(a)
         @test TA.nb_links(problem) == 18002
         @test TA.nb_zones(problem) == 194
         @test startswith(string(problem), "Traffic")
+
+        pb1 = TrafficAssignmentProblem(
+            "UnifiedTrafficDataset", "San Francisco"; solution="TransCAD"
+        )
+        pb2 = TrafficAssignmentProblem(
+            "UnifiedTrafficDataset", "San Francisco"; solution="AequilibriaE"
+        )
     end
 
     @testset "Read all instances" begin
@@ -79,7 +86,7 @@ reldist(a, b) = norm(a - b) / norm(a)
 
     @testset "Plotting" begin
         pb = TrafficAssignmentProblem("TransportationNetworks", "SiouxFalls")
-        plot_network(pb, pb.optimal_flow)
+        plot_network(pb, pb.optimal_flow; nodes=true)
         if VERSION >= v"1.11"
             using Pkg
             Pkg.add("Tyler")

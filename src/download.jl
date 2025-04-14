@@ -61,7 +61,7 @@ end
 
 Return the absolute path to the raw data.
 
-The `dataset_name` must be one of $DATASET_NAMES.
+The `dataset_name` must be one of `$DATASET_NAMES`.
 """
 function datapath(dataset_name::AbstractString)
     if dataset_name == "TransportationNetworks"

@@ -53,12 +53,24 @@ function _instance_files(::Val{:UnifiedTrafficDataset}, instance_name)
         instance_dir, "01_Input_data", "$(underscored_instance_name)_link.csv"
     )
     od_file = joinpath(instance_dir, "01_Input_data", "$(underscored_instance_name)_od.csv")
-    solution_network_file = joinpath(instance_dir, "03_AequilibraE_results", "network.csv")
-    solution_assignment_file = joinpath(
+    aequilibriae_network_file = joinpath(
+        instance_dir, "03_AequilibraE_results", "network.csv"
+    )
+    aequilibriae_assignment_file = joinpath(
         instance_dir, "03_AequilibraE_results", "assignment_result.csv"
     )
+    transcad_linkflows_file = joinpath(
+        instance_dir,
+        "02_TransCAD_results",
+        "$(underscored_instance_name)_link_LinkFlows.csv",
+    )
     return (;
-        node_file, link_file, od_file, solution_network_file, solution_assignment_file
+        node_file,
+        link_file,
+        od_file,
+        aequilibriae_network_file,
+        aequilibriae_assignment_file,
+        transcad_linkflows_file,
     )
 end
 
@@ -67,18 +79,20 @@ end
 
 User-friendly constructor for [`TrafficAssignmentProblem`](@ref).
 
+The dataset must be one of `$DATASET_NAMES`, the instance can be chosen from [`list_instances`](@ref).
+
 !!! tip
 
     When you run this function for the first time, the DataDeps package will ask you to confirm download.
     If you want to skip this check, for instance during CI, set the environment variable `ENV["DATADEPS_ALWAYS_ACCEPT"] = true`.
 """
 function TrafficAssignmentProblem(
-    dataset_name::AbstractString, instance_name::AbstractString;
+    dataset_name::AbstractString, instance_name::AbstractString; kwargs...
 )
     if !(dataset_name in DATASET_NAMES)
         throw(ArgumentError("The dataset name must be one of $DATASET_NAMES"))
     end
-    return _TrafficAssignmentProblem(Val(Symbol(dataset_name)), instance_name)
+    return _TrafficAssignmentProblem(Val(Symbol(dataset_name)), instance_name; kwargs...)
 end
 
 function _TrafficAssignmentProblem(
@@ -283,10 +297,7 @@ function _TrafficAssignmentProblem(
 end
 
 function _TrafficAssignmentProblem(
-    ::Val{:UnifiedTrafficDataset},
-    instance_name,
-    toll_factor::Real=0.0,
-    distance_factor::Real=0.0,
+    ::Val{:UnifiedTrafficDataset}, instance_name; solution=nothing
 )
     dataset_name = "UnifiedTrafficDataset"
     underscored_instance_name = replace(instance_name, " " => "_")
@@ -369,26 +380,69 @@ function _TrafficAssignmentProblem(
 
     # solution
 
-    sol_network_df = DataFrame(CSV.File(files.solution_network_file))
-    sol_assignment_df = DataFrame(CSV.File(files.solution_assignment_file))
-    sol_df = leftjoin(sol_assignment_df, sol_network_df; on=:link_id)
-    sol_df = leftjoin(
-        sol_df,
-        @select(node_df, :Node_ID, :New_Node_ID);
-        on=:a_node => :Node_ID,
-        renamecols="" => "_a_node",
-    )
-    sol_df = leftjoin(
-        sol_df,
-        @select(node_df, :Node_ID, :New_Node_ID);
-        on=:b_node => :Node_ID,
-        renamecols="" => "_b_node",
-    )
-    A = sol_df[!, :New_Node_ID_a_node]
-    B = sol_df[!, :New_Node_ID_b_node]
-    VAB = coalesce.(sol_df[!, :matrix_ab], 0.0)
-    VBA = coalesce.(sol_df[!, :matrix_ba], 0.0)
-    optimal_flow = dropzeros(sparse(A, B, VAB, n, n)) + dropzeros(sparse(B, A, VBA, n, n))
+    if solution == "AequilibriaE"
+        sol_network_df = DataFrame(CSV.File(files.aequilibriae_network_file))
+        sol_assignment_df = DataFrame(CSV.File(files.aequilibriae_assignment_file))
+        sol_df = leftjoin(sol_assignment_df, sol_network_df; on=:link_id)
+        sol_df = leftjoin(
+            sol_df,
+            @select(node_df, :Node_ID, :New_Node_ID);
+            on=:a_node => :Node_ID,
+            renamecols="" => "_a_node",
+        )
+        sol_df = leftjoin(
+            sol_df,
+            @select(node_df, :Node_ID, :New_Node_ID);
+            on=:b_node => :Node_ID,
+            renamecols="" => "_b_node",
+        )
+        A = sol_df[!, :New_Node_ID_a_node]
+        B = sol_df[!, :New_Node_ID_b_node]
+        VAB = coalesce.(sol_df[!, :matrix_ab], 0.0)
+        VBA = coalesce.(sol_df[!, :matrix_ba], 0.0)
+        optimal_flow =
+            dropzeros(sparse(A, B, VAB, n, n)) + dropzeros(sparse(B, A, VBA, n, n))
+    elseif solution == "TransCAD"
+        linkflows_df = DataFrame(CSV.File(files.transcad_linkflows_file))
+        linkflows_df = @select(
+            linkflows_df,
+            :ID,
+            :Dir,
+            :AB_From_Node_,
+            :AB_To_Node_ID,
+            :BA_From_Node_,
+            :BA_To_Node_ID,
+            :AB_Flow,
+            :BA_Flow,
+            :AB_VOC,
+            :BA_VOC,
+            :Max_VOC,
+        )
+        linkflows_df = leftjoin(
+            linkflows_df,
+            @select(node_df, :Node_ID, :New_Node_ID);
+            on=:AB_From_Node_ => :Node_ID,
+            renamecols="" => "_A",
+        )
+        linkflows_df = leftjoin(
+            linkflows_df,
+            @select(node_df, :Node_ID, :New_Node_ID);
+            on=:AB_To_Node_ID => :Node_ID,
+            renamecols="" => "_B",
+        )
+        A = linkflows_df[!, :New_Node_ID_A]
+        B = linkflows_df[!, :New_Node_ID_B]
+        VAB = linkflows_df[!, :AB_Flow]
+        VBA = linkflows_df[!, :BA_Flow]
+        optimal_flow_AB = sparse(A, B, VAB, n, n)
+        reverse_exists = (!ismissing).(VBA)
+        optimal_flow_BA = sparse(
+            B[reverse_exists], A[reverse_exists], identity.(VBA[reverse_exists]), n, n
+        )
+        optimal_flow = dropzeros(optimal_flow_AB) + dropzeros(optimal_flow_BA)
+    else
+        optimal_flow = missing
+    end
 
     return TrafficAssignmentProblem(;
         dataset_name="UnifiedTrafficDataset",
