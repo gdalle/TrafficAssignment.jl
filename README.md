@@ -7,6 +7,7 @@
 This is a Julia package for studying [traffic assignment](https://en.wikipedia.org/wiki/Route_assignment) on road networks, based on data from:
 
 - the [`TransportationNetworks`](https://github.com/bstabler/TransportationNetworks) repository
+- the [Unified Traffic Dataset](https://www.nature.com/articles/s41597-024-03149-8) paper
 
 ## Getting started
 
