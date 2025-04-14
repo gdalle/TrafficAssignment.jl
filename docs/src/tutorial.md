@@ -30,7 +30,7 @@ problem = TrafficAssignmentProblem(dataset_name, instance_name)
 You can visualize instances as follows:
 
 ```@example tuto
-plot_network(problem; zones=false, tiles=false)
+plot_network(problem; zones=false, tiles=true)
 ```
 
 ## Solution
@@ -39,4 +39,10 @@ You can solve instances as follows:
 
 ```@example tuto
 flow = solve_frank_wolfe(problem; verbose=false, max_iteration=1000)
+```
+
+The solution can be visualized with the same plotting function:
+
+```@example
+plot_network(problem, flow; nodes=false, zones=false, tiles=false)
 ```

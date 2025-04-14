@@ -1,6 +1,6 @@
 using TrafficAssignment
 import TrafficAssignment as TA
-using Test, LinearAlgebra, SparseArrays
+using Test, LinearAlgebra, Pkg, SparseArrays
 using DelimitedFiles
 using Aqua, Documenter, JET, JuliaFormatter
 using CairoMakie
@@ -78,13 +78,14 @@ reldist(a, b) = norm(a - b) / norm(a)
     end
 
     @testset "Plotting" begin
-        plot_network(
-            TrafficAssignmentProblem("TransportationNetworks", "SiouxFalls"); tiles=true
-        )
-        plot_network(
-            TrafficAssignmentProblem("UnifiedTrafficDataset", "01_San_Francisco");
-            tiles=false,
-            zones=true,
-        )
+        pb = TrafficAssignmentProblem("TransportationNetworks", "SiouxFalls")
+        plot_network(pb, pb.optimal_flow)
+        if VERSION >= v"1.11"
+            using Pkg
+            Pkg.add("Tyler")
+            using Tyler
+            pb = TrafficAssignmentProblem("UnifiedTrafficDataset", "01_San_Francisco")
+            plot_network(pb; tiles=true, zones=true)
+        end
     end
 end

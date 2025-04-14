@@ -1,7 +1,12 @@
 """
-    plot_network(problem::TrafficAssignmentProblem; zones=false, tiles=false)
+    plot_network(
+        problem::TrafficAssignmentProblem, flow=nothing;
+        nodes=true, zones=false, tiles=false
+    )
 
 Plot a transportation network, possibly on top of real-world map tiles.
+
+If a `flow` is provided, network edges will be colored according to their congestion level.
 
 !!! warning
 

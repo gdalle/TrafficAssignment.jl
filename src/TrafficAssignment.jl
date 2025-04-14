@@ -27,6 +27,7 @@ using Distributed
 using Printf
 using LinearAlgebra
 using SparseArrays
+using Statistics
 
 include("download.jl")
 include("types.jl")
