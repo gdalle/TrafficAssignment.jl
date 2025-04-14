@@ -11,7 +11,7 @@ const WebMercator = "EPSG:3857"
 function TrafficAssignment.plot_network(
     problem::TrafficAssignmentProblem,
     flow::Union{Nothing,SparseMatrixCSC}=nothing;
-    nodes=true,
+    nodes=false,
     zones=false,
     tiles=false,
 )
@@ -81,7 +81,7 @@ function TrafficAssignment.plot_network(
     ls = linesegments!(
         ax,
         point_couples;
-        linewidth=3,
+        linewidth=2,
         color=segment_color,
         colorrange=segment_colorrange,
         colormap=:plasma,
@@ -97,7 +97,7 @@ function TrafficAssignment.plot_network(
     end
     if tiles && valid_longitude_latitude
         TA.add_tiles!(fig, ax, node_coord)
-        translate!(sc1, 0, 0, 10)
+        nodes && translate!(sc1, 0, 0, 10)
         zones && translate!(sc2, 0, 0, 10)
         translate!(ls, 0, 0, 10)
     end
