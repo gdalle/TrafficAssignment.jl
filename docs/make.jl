@@ -3,7 +3,7 @@ using TrafficAssignment
 ENV["DATADEPS_ALWAYS_ACCEPT"] = true
 
 TrafficAssignmentProblem("TransportationNetworks", "SiouxFalls")
-TrafficAssignmentProblem("UnifiedTrafficDataset", "01_San_Francisco")
+TrafficAssignmentProblem("UnifiedTrafficDataset", "San Francisco")
 
 cp(joinpath(@__DIR__, "..", "README.md"), joinpath(@__DIR__, "src", "index.md"); force=true)
 
