@@ -43,6 +43,6 @@ flow = solve_frank_wolfe(problem; verbose=false, max_iteration=1000)
 
 The solution can be visualized with the same plotting function:
 
-```@example
+```@example tuto
 plot_network(problem, flow; nodes=false, zones=false, tiles=false)
 ```

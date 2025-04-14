@@ -84,7 +84,7 @@ reldist(a, b) = norm(a - b) / norm(a)
             using Pkg
             Pkg.add("Tyler")
             using Tyler
-            pb = TrafficAssignmentProblem("UnifiedTrafficDataset", "01_San_Francisco")
+            pb = TrafficAssignmentProblem("UnifiedTrafficDataset", "San Francisco")
             plot_network(pb; tiles=true, zones=true)
         end
     end

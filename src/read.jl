@@ -36,12 +36,23 @@ function _instance_files(::Val{:TransportationNetworks}, instance_name)
 end
 
 function _instance_files(::Val{:UnifiedTrafficDataset}, instance_name)
-    instance_dir = datapath("UnifiedTrafficDataset", instance_name)
+    dataset_name = "UnifiedTrafficDataset"
+    underscored_instance_name = replace(instance_name, " " => "_")
+    instance_dir = ""
+    for potential_instance_dir in readdir(datapath(dataset_name); join=true)
+        if endswith(potential_instance_dir, underscored_instance_name)
+            instance_dir = potential_instance_dir
+            break
+        end
+    end
     @assert ispath(instance_dir)
-    city = strip(instance_name, vcat('_', getindex.(Ref("0123456789"), 1:10)))
-    node_file = joinpath(instance_dir, "01_Input_data", "$(city)_node.csv")
-    link_file = joinpath(instance_dir, "01_Input_data", "$(city)_link.csv")
-    od_file = joinpath(instance_dir, "01_Input_data", "$(city)_od.csv")
+    node_file = joinpath(
+        instance_dir, "01_Input_data", "$(underscored_instance_name)_node.csv"
+    )
+    link_file = joinpath(
+        instance_dir, "01_Input_data", "$(underscored_instance_name)_link.csv"
+    )
+    od_file = joinpath(instance_dir, "01_Input_data", "$(underscored_instance_name)_od.csv")
     return (; node_file, link_file, od_file)
 end
 
@@ -271,8 +282,9 @@ function _TrafficAssignmentProblem(
     toll_factor::Real=0.0,
     distance_factor::Real=0.0,
 )
-    files = TrafficAssignment.instance_files("UnifiedTrafficDataset", instance_name)
-    city = instance_name[4:end]
+    dataset_name = "UnifiedTrafficDataset"
+    underscored_instance_name = replace(instance_name, " " => "_")
+    files = TrafficAssignment.instance_files(dataset_name, instance_name)
 
     # nodes
 
@@ -314,8 +326,12 @@ function _TrafficAssignmentProblem(
         CSV.File(joinpath(dirname(@__DIR__), "data", "UnifiedTrafficDataset", "bpr.csv"))
     )
 
-    link_bpr_mult = only(@rsubset(bpr_df, :city == city)[!, :bpr_alpha])
-    link_bpr_power = only(@rsubset(bpr_df, :city == city)[!, :bpr_beta])
+    link_bpr_mult = only(
+        @rsubset(bpr_df, :city == underscored_instance_name)[!, :bpr_alpha]
+    )
+    link_bpr_power = only(
+        @rsubset(bpr_df, :city == underscored_instance_name)[!, :bpr_beta]
+    )
 
     # demand
 
@@ -379,7 +395,12 @@ function list_instances(dataset_name::AbstractString)
         end
         return [(dataset_name, instance_name) for instance_name in instance_names]
     else
-        return [(dataset_name, instance_name) for instance_name in readdir(data_dir)]
+        instance_names = String[]
+        for underscored_name in readdir(data_dir)
+            instance_name = replace(underscored_name[4:end], "_" => " ")
+            push!(instance_names, instance_name)
+        end
+        return [(dataset_name, instance_name) for instance_name in instance_names]
     end
 end
 
