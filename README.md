@@ -7,6 +7,7 @@
 This is a Julia package for studying [traffic assignment](https://en.wikipedia.org/wiki/Route_assignment) on road networks, based on data from:
 
 - the [`TransportationNetworks`](https://github.com/bstabler/TransportationNetworks) repository
+- the [Unified Traffic Dataset](https://www.nature.com/articles/s41597-024-03149-8) paper
 
 ## Getting started
 
@@ -16,8 +17,9 @@ To install the latest development version, run this in your Julia Pkg REPL:
 pkg> add https://github.com/gdalle/TrafficAssignment.jl
 ```
 
-Check out the documentation for details.
+Check out the [documentation](https://gdalle.github.io/TrafficAssignment.jl/dev/) to know what to do next.
 
 ## Credits
 
 This package was originally written and maintained by [Changhyun Kwon](http://www.chkwon.net).
+It has been adapted and is now maintained by [Guillaume Dalle](https://gdalle.github.io/).
