@@ -12,6 +12,7 @@ const DATASET_NAMES = ["TransportationNetworks", "UnifiedTrafficDataset"]
 
 # outside packages
 using BinDeps: unpack_cmd
+using Colors
 using CSV: CSV
 using DataDeps: DataDeps, DataDep, @datadep_str
 using DataFrames

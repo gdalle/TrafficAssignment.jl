@@ -46,6 +46,13 @@ reldist(a, b) = norm(a - b) / norm(a)
         @test TA.nb_links(problem) == 18002
         @test TA.nb_zones(problem) == 194
         @test startswith(string(problem), "Traffic")
+
+        pb1 = TrafficAssignmentProblem(
+            "UnifiedTrafficDataset", "San Francisco"; solution="TransCAD"
+        )
+        pb2 = TrafficAssignmentProblem(
+            "UnifiedTrafficDataset", "San Francisco"; solution="AequilibraE"
+        )
     end
 
     @testset "Read all instances" begin
