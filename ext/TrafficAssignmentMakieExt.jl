@@ -74,7 +74,6 @@ function TrafficAssignment.plot_network(
     # figure size
     Δx = maximum(X) - minimum(X)
     Δy = maximum(Y) - minimum(Y)
-    Δmax = max(Δx, Δy)
 
     # figure creation
     fig = Figure()
@@ -82,25 +81,20 @@ function TrafficAssignment.plot_network(
         fig[1, 1];
         title=instance_name,
         subtitle="$(nb_nodes(problem)) nodes, $(nb_links(problem)) links",
-        aspect=DataAspect(),
-        width=(500 / Δmax) .* Δx,
-        height=(500 / Δmax) .* Δy,
+        aspect=tiles ? nothing : DataAspect(),
     )
     hidedecorations!(ax)
     hidespines!(ax)
 
     # actual plotting
-    ls1 = linesegments!(ax, point_couples; linewidth=0.5, color=:gray)
-    translate!(ls1, 0, 0, 10)
-    if nodes
-        sc1 = scatter!(ax, real_points; color=:black)
-        translate!(sc1, 0, 0, 10)
-    end
-    if zones
-        sc2 = scatter!(ax, zone_points; color=:black, marker=:diamond)
-        translate!(sc2, 0, 0, 10)
-    end
-    if !isnothing(flow)
+    ls1 = linesegments!(
+        ax,
+        point_couples;
+        linewidth=isnothing(flow) ? 2 : 0.5,
+        color=isnothing(flow) ? :black : :gray,
+        linecap=:round,
+    )
+    ls2 = if !isnothing(flow)
         red_green_yellow = vcat(
             range(HSL(colorant"green"); stop=HSL(colorant"yellow"), length=4),
             range(HSL(colorant"yellow"); stop=HSL(colorant"red"), length=4)[2:end],
@@ -108,16 +102,30 @@ function TrafficAssignment.plot_network(
         ls2 = linesegments!(
             ax,
             point_couples;
+            linecap=:round,
             linewidth=segment_linewidth,
             color=segment_color,
-            colorrange=(0, 1.5),
+            colorrange=(0, 2),
             colormap=red_green_yellow,
         )
         Colorbar(fig[2, 1], ls2; vertical=false, label="Link flow (flow / capacity)")
-        translate!(ls2, 0, 0, 10)
+        if !tiles
+            colsize!(fig.layout, 1, Aspect(1, Δx / Δy))
+        end
+        ls2
+    end
+    sc1 = if nodes
+        scatter!(ax, real_points; color=:black)
+    end
+    sc2 = if zones
+        scatter!(ax, zone_points; color=:black, marker=:diamond)
     end
     if tiles && valid_longitude_latitude
         TA.add_tiles!(fig, ax, node_coord)
+        translate!(ls1, 0, 0, 10)
+        nodes && translate!(sc1, 0, 0, 10)
+        zones && translate!(sc2, 0, 0, 10)
+        !isnothing(flow) && translate!(ls2, 0, 0, 10)
     end
     resize_to_layout!(fig)
     return fig
