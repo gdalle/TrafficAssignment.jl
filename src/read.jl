@@ -53,10 +53,10 @@ function _instance_files(::Val{:UnifiedTrafficDataset}, instance_name)
         instance_dir, "01_Input_data", "$(underscored_instance_name)_link.csv"
     )
     od_file = joinpath(instance_dir, "01_Input_data", "$(underscored_instance_name)_od.csv")
-    aequilibriae_network_file = joinpath(
+    aequilibrae_network_file = joinpath(
         instance_dir, "03_AequilibraE_results", "network.csv"
     )
-    aequilibriae_assignment_file = joinpath(
+    aequilibrae_assignment_file = joinpath(
         instance_dir, "03_AequilibraE_results", "assignment_result.csv"
     )
     transcad_linkflows_file = joinpath(
@@ -68,8 +68,8 @@ function _instance_files(::Val{:UnifiedTrafficDataset}, instance_name)
         node_file,
         link_file,
         od_file,
-        aequilibriae_network_file,
-        aequilibriae_assignment_file,
+        aequilibrae_network_file,
+        aequilibrae_assignment_file,
         transcad_linkflows_file,
     )
 end
@@ -380,9 +380,9 @@ function _TrafficAssignmentProblem(
 
     # solution
 
-    if solution == "AequilibriaE"
-        sol_network_df = DataFrame(CSV.File(files.aequilibriae_network_file))
-        sol_assignment_df = DataFrame(CSV.File(files.aequilibriae_assignment_file))
+    if solution == "AequilibraE"
+        sol_network_df = DataFrame(CSV.File(files.aequilibrae_network_file))
+        sol_assignment_df = DataFrame(CSV.File(files.aequilibrae_assignment_file))
         sol_df = leftjoin(sol_assignment_df, sol_network_df; on=:link_id)
         sol_df = leftjoin(
             sol_df,

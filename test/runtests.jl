@@ -51,7 +51,7 @@ reldist(a, b) = norm(a - b) / norm(a)
             "UnifiedTrafficDataset", "San Francisco"; solution="TransCAD"
         )
         pb2 = TrafficAssignmentProblem(
-            "UnifiedTrafficDataset", "San Francisco"; solution="AequilibriaE"
+            "UnifiedTrafficDataset", "San Francisco"; solution="AequilibraE"
         )
     end
 
