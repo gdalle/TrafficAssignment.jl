@@ -21,5 +21,5 @@ Check out the [documentation](https://gdalle.github.io/TrafficAssignment.jl/dev/
 
 ## Credits
 
-This package was originally written and maintained by [Changhyun Kwon](http://www.chkwon.net).
+This package was originally written and maintained by [Changhyun Kwon](http://www.chkwon.net) (see the [previous repository](https://github.com/chkwon/TrafficAssignment.jl)).
 It has been adapted and is now maintained by [Guillaume Dalle](https://gdalle.github.io/).
