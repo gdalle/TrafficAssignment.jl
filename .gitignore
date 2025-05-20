@@ -1,6 +1,6 @@
 TransportationNetworks-*
-Manifest.toml
+# Manifest.toml
 /docs/build
 /docs/src/index.md
-playground.jl
+# playground.jl
 *.tntp

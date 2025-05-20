@@ -11,15 +11,18 @@ module TrafficAssignment
 const DATASET_NAMES = ["TransportationNetworks", "UnifiedTrafficDataset"]
 
 # outside packages
+using Atomix
 using BinDeps: unpack_cmd
 using Colors
 using CSV: CSV
 using DataDeps: DataDeps, DataDep, @datadep_str
 using DataFrames
 using DataFramesMeta
+using DataStructures
 using DocStringExtensions
 using FrankWolfe
 using Graphs
+using OhMyThreads
 using OrderedCollections
 using Proj
 using SimpleWeightedGraphs
@@ -33,6 +36,7 @@ using Statistics
 include("download.jl")
 include("types.jl")
 include("read.jl")
+include("paths.jl")
 include("solve.jl")
 include("plot.jl")
 

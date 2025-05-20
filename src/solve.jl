@@ -75,15 +75,24 @@ function FrankWolfe.compute_extreme_point(
     (; demand) = problem
     cost = sparse_by_link(problem, cost_vec)
     graph = SimpleWeightedDiGraph(cost)
-    flow = similar(cost)
-    flow .= 0
-    for (o, d) in keys(demand)
-        path = a_star(graph, o, d, weights(graph), Base.Fix1(getindex, heuristic_dists[d]))
-        for edge in path
-            flow[src(edge), dst(edge)] += demand[o, d]
+    I, J, C = findnz(cost)
+    flow_vec = zero(C)
+    edge_index = Dict((i, j) => e for (e, (i, j)) in enumerate(zip(I, J)))
+    od_pairs = collect(keys(demand))
+    @tasks for (o, d) in od_pairs
+        @local (; heap, parents, dists, path) = init_astar(graph)
+        astar!(heap, parents, dists, path, graph, o, d, heuristic_dists[d])
+        for k in eachindex(path)[1:(end - 1)]
+            v, u = path[k], path[k + 1]
+            if u == 0
+                break
+            else
+                e = edge_index[u, v]
+                Atomix.@atomic flow_vec[e] += demand[o, d]
+            end
         end
     end
-    return mynz(flow)
+    return flow_vec
 end
 
 """
