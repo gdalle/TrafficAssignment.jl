@@ -494,26 +494,20 @@ Perform some data cleaning on a `TrafficAssignmentProblem`:
   - remove OD pairs without a path between them (the free flow time is infinite)
 """
 function postprocess!(pb::TrafficAssignmentProblem)
-    (; link_free_flow_time, demand, removed_od_pairs) = pb
+    (; link_free_flow_time, demand, destination_free_flow_time, removed_od_pairs) = pb
     W = eltype(link_free_flow_time)
     g_rev = SimpleWeightedDiGraph(transpose(link_free_flow_time))
     destinations = unique(map(last, collect(keys(demand))))
-    destination_free_flow_time = @tasks for d in destinations
-        @set reducer = merge
-        @local destination_free_flow_time_local, (; heap, parents, dists) = (
-            Dict{Int,Vector{Float64}}(), init_dijkstra(g_rev)
-        )
+    (; heap, parents, dists) = init_dijkstra(g_rev)
+    for d in destinations
         dijkstra!(heap, parents, dists, g_rev, d)
-        destination_free_flow_time_local[d] = dists
-        destination_free_flow_time_local
+        destination_free_flow_time[d] = copy(dists)
     end
     for (o, d) in keys(demand)
         if destination_free_flow_time[d][o] == typemax(W)
             push!(removed_od_pairs, (o, d))
+            delete!(demand, (o, d))  # modifies the instance
         end
-    end
-    for d in destinations
-        pb.destination_free_flow_time[d] = destination_free_flow_time[d]
     end
 end
 

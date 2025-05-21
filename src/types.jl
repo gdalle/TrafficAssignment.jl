@@ -58,13 +58,13 @@ $(TYPEDFIELDS)
 
     # links
     "matrix of link capacities (`c` in the BPR formula)"
-    link_capacity::SparseMatrixCSC{Capa}
+    link_capacity::SparseMatrixCSC{Capa,Int}
     "matrix of link lengths"
-    link_length::SparseMatrixCSC{Length}
+    link_length::SparseMatrixCSC{Length,Int}
     "matrix of link free flow times (`t0` in the BPR formula)"
-    link_free_flow_time::SparseMatrixCSC{Free}
+    link_free_flow_time::SparseMatrixCSC{Free,Int}
     "matrix of link speed limits"
-    link_speed_limit::SparseMatrixCSC{Speed}
+    link_speed_limit::SparseMatrixCSC{Speed,Int}
     "link multiplicative factors `α` in the BPR formula, either a single scalar or a matrix"
     link_bpr_mult::BPRMult
     "link exponents `β` in the BPR formula, either a single scalar or a matrix"
