@@ -584,16 +584,16 @@ function summarize_instances(dataset_name::AbstractString)
         yield()
         valid = false
         nn, nl, nz = (-1, -1, -1)
-        # try
+        try
             problem = TrafficAssignmentProblem(dataset_name, instance_name)
             valid = true
             nn = nb_nodes(problem)
             nl = nb_links(problem)
             nz = nb_zones(problem)
-        # catch exception
-        #     @warn "Loading $instance_name from $dataset_name failed" exception
-        #     # nothing
-        # end
+        catch exception
+            @warn "Loading $instance_name from $dataset_name failed" exception
+            # nothing
+        end
         push!(
             df,
             (;
