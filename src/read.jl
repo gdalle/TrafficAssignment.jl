@@ -92,7 +92,9 @@ function TrafficAssignmentProblem(
     if !(dataset_name in DATASET_NAMES)
         throw(ArgumentError("The dataset name must be one of $DATASET_NAMES"))
     end
-    return _TrafficAssignmentProblem(Val(Symbol(dataset_name)), instance_name; kwargs...)
+    pb = _TrafficAssignmentProblem(Val(Symbol(dataset_name)), instance_name; kwargs...)
+    postprocess!(pb)
+    return pb
 end
 
 function _TrafficAssignmentProblem(
@@ -219,9 +221,12 @@ function _TrafficAssignmentProblem(
             end
         end
     end
+    removed_od_pairs = Tuple{Int,Int}[]
 
     @assert nb_zones_trip == nb_zones # Check if nb_zone is same in both txt files
     @assert total_od_flow > 0
+
+    destination_free_flow_time = Dict{Int,Vector{Float64}}()
 
     # node table
 
@@ -288,6 +293,8 @@ function _TrafficAssignmentProblem(
         link_type,
         # demand
         demand,
+        removed_od_pairs,
+        destination_free_flow_time,
         # cost
         toll_factor,
         distance_factor,
@@ -377,6 +384,9 @@ function _TrafficAssignmentProblem(
         collect(zip(od_df[!, :New_Node_ID_O], od_df[!, :New_Node_ID_D])) .=>
             od_df[!, :OD_Number],
     )
+    removed_od_pairs = Tuple{Int,Int}[]
+
+    destination_free_flow_time = Dict{Int,Vector{Float64}}()
 
     # solution
 
@@ -465,12 +475,46 @@ function _TrafficAssignmentProblem(
         link_type,
         # demand
         demand,
+        removed_od_pairs,
+        destination_free_flow_time,
         # cost
         toll_factor=missing,
         distance_factor=missing,
         # solution
         optimal_flow,
     )
+end
+
+"""
+    postprocess!(pb)
+
+Perform some data cleaning on a `TrafficAssignmentProblem`:
+
+  - precompute free flow times to every destination present in the demand
+  - remove OD pairs without a path between them (the free flow time is infinite)
+"""
+function postprocess!(pb::TrafficAssignmentProblem)
+    (; link_free_flow_time, demand, removed_od_pairs) = pb
+    W = eltype(link_free_flow_time)
+    g_rev = SimpleWeightedDiGraph(transpose(link_free_flow_time))
+    destinations = unique(map(last, collect(keys(demand))))
+    destination_free_flow_time = @tasks for d in destinations
+        @set reducer = merge
+        @local destination_free_flow_time_local, (; heap, parents, dists) = (
+            Dict{Int,Vector{Float64}}(), init_dijkstra(g_rev)
+        )
+        dijkstra!(heap, parents, dists, g_rev, d)
+        destination_free_flow_time_local[d] = dists
+        destination_free_flow_time_local
+    end
+    for (o, d) in keys(demand)
+        if destination_free_flow_time[d][o] == typemax(W)
+            push!(removed_od_pairs, (o, d))
+        end
+    end
+    for d in destinations
+        pb.destination_free_flow_time[d] = destination_free_flow_time[d]
+    end
 end
 
 """

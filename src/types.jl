@@ -24,10 +24,10 @@ $(TYPEDFIELDS)
 """
 @kwdef struct TrafficAssignmentProblem{
     Coord<:Union{Missing,Vector{<:NTuple{2,<:Number}}},
-    Capa<:SparseMatrixCSC{<:Number},
-    Length<:SparseMatrixCSC{<:Number},
-    Free<:SparseMatrixCSC{<:Number},
-    Speed<:SparseMatrixCSC{<:Number},
+    Capa<:Number,
+    Length<:Number,
+    Free<:Number,
+    Speed<:Number,
     BPRMult<:Union{Number,SparseMatrixCSC{<:Number}},
     BPRPow<:Union{Number,SparseMatrixCSC{<:Number}},
     Toll<:Union{Missing,SparseMatrixCSC{<:Number}},
@@ -58,13 +58,13 @@ $(TYPEDFIELDS)
 
     # links
     "matrix of link capacities (`c` in the BPR formula)"
-    link_capacity::Capa
+    link_capacity::SparseMatrixCSC{Capa}
     "matrix of link lengths"
-    link_length::Length
+    link_length::SparseMatrixCSC{Length}
     "matrix of link free flow times (`t0` in the BPR formula)"
-    link_free_flow_time::Free
+    link_free_flow_time::SparseMatrixCSC{Free}
     "matrix of link speed limits"
-    link_speed_limit::Speed
+    link_speed_limit::SparseMatrixCSC{Speed}
     "link multiplicative factors `α` in the BPR formula, either a single scalar or a matrix"
     link_bpr_mult::BPRMult
     "link exponents `β` in the BPR formula, either a single scalar or a matrix"
@@ -77,6 +77,10 @@ $(TYPEDFIELDS)
     # demand
     "demand by OD pair"
     demand::Dict{Tuple{Int,Int},Dem}
+    "OD pairs removed because no path between them exists"
+    removed_od_pairs::Vector{Tuple{Int,Int}}
+    "dictionary mapping each destination to a vector of free flow path times for every possible source"
+    destination_free_flow_time::Dict{Int,Vector{Free}}
 
     # cost parameters
     "conversion factor turning toll costs into temporal costs, expressed in time/toll"

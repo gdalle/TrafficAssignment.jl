@@ -48,40 +48,29 @@ function social_cost(problem::TrafficAssignmentProblem, flow::AbstractMatrix)
     return dot(link_travel_time(problem, flow), flow)
 end
 
-struct ShortestPathOracle{P<:TrafficAssignmentProblem,H} <:
+struct ShortestPathOracle{P<:TrafficAssignmentProblem} <:
        FrankWolfe.LinearMinimizationOracle
     problem::P
-    heuristic_dists::H
-end
-
-function ShortestPathOracle(problem::TrafficAssignmentProblem)
-    (; link_free_flow_time, demand) = problem
-    revgraph = SimpleWeightedDiGraph(transpose(link_free_flow_time))
-    heuristic_dists = Dict{Int,Vector{Float64}}()
-    for (o, d) in keys(demand)
-        if !haskey(heuristic_dists, d)
-            spt = dijkstra_shortest_paths(revgraph, d)
-            heuristic_dists[d] = spt.dists
-        end
-    end
-    return ShortestPathOracle(problem, heuristic_dists)
 end
 
 function FrankWolfe.compute_extreme_point(
     spo::ShortestPathOracle, cost_vec::AbstractVector; kwargs...
 )
     yield()
-    (; problem, heuristic_dists) = spo
-    (; demand) = problem
+    (; problem) = spo
+    (; demand, destination_free_flow_time) = problem
     cost = sparse_by_link(problem, cost_vec)
     graph = SimpleWeightedDiGraph(cost)
     I, J, C = findnz(cost)
     flow_vec = zero(C)
     edge_index = Dict((i, j) => e for (e, (i, j)) in enumerate(zip(I, J)))
     od_pairs = collect(keys(demand))
+    # Dijkstra version
+    # A* version
     @tasks for (o, d) in od_pairs
         @local (; heap, parents, dists, path) = init_astar(graph)
-        astar!(heap, parents, dists, path, graph, o, d, heuristic_dists[d])
+        heuristic = destination_free_flow_time[d]
+        astar!(heap, parents, dists, path, graph, o, d, heuristic)
         for k in eachindex(path)[1:(end - 1)]
             v, u = path[k], path[k + 1]
             if u == 0
