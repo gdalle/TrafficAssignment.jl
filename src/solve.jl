@@ -58,50 +58,27 @@ function FrankWolfe.compute_extreme_point(
 )
     yield()
     (; problem) = spo
-    (; demand, destination_free_flow_time) = problem
+    (; link_id, demand, origins, destinations) = problem
     cost = sparse_by_link(problem, cost_vec)
-    graph = SimpleWeightedDiGraph(cost)
-    I, J, C = findnz(cost)
-    flow_vec = zero(C)
-    edge_index = Dict((i, j) => e for (e, (i, j)) in enumerate(zip(I, J)))
-    od_pairs = collect(keys(demand))
-    origins = unique(first.(od_pairs))
-    destinations = unique(last.(od_pairs))
-    # Dijkstra version
+    graph = SimpleWeightedDiGraph(cost, link_id)
+    flow_vec = zeros(float(valtype(demand)), length(cost_vec))
     @tasks for o in origins
-        @local (; heap, parents, dists) = init_dijkstra(graph)
-        dijkstra!(heap, parents, dists, graph, o)
-        for d in destinations
-            if haskey(demand, (o, d))
-                dem = demand[o, d]
-                v = d
-                while v != o
-                    u = parents[v]
-                    e = edge_index[u, v]
-                    Atomix.@atomic flow_vec[e] += dem
-                    v = parents[v]
+        @local storage = DijkstraStorage(graph)
+        dijkstra!(storage, graph, o)
+        @one_by_one begin
+            for d in destinations
+                if haskey(demand, (o, d))
+                    dem = demand[o, d]
+                    v = d
+                    while v != o
+                        e = storage.edge_ids[v]
+                        flow_vec[e] += dem
+                        v = storage.parents[v]
+                    end
                 end
             end
         end
     end
-    # A* version, much slower
-    #=
-    @tasks for (o, d) in od_pairs
-        @local (; heap, parents, dists, path) = init_astar(graph)
-        dem = demand[o, d]
-        heuristic = destination_free_flow_time[d]
-        astar!(heap, parents, dists, path, graph, o, d, heuristic)
-        for k in eachindex(path)[1:(end - 1)]
-            v, u = path[k], path[k + 1]
-            if u == 0
-                break
-            else
-                e = edge_index[u, v]
-                Atomix.@atomic flow_vec[e] += dem
-            end
-        end
-    end
-    =#
     return flow_vec
 end
 

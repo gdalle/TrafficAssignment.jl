@@ -57,6 +57,8 @@ $(TYPEDFIELDS)
     valid_longitude_latitude::Bool
 
     # links
+    "matrix of link ids starting at one"
+    link_id::SparseMatrixCSC{Int,Int}
     "matrix of link capacities (`c` in the BPR formula)"
     link_capacity::SparseMatrixCSC{Capa,Int}
     "matrix of link lengths"
@@ -77,9 +79,13 @@ $(TYPEDFIELDS)
     # demand
     "demand by OD pair"
     demand::Dict{Tuple{Int,Int},Dem}
+    "vector of unique origins for the OD pairs"
+    origins::Vector{Int}
+    "vector of unique destinations for the OD pairs"
+    destinations::Vector{Int}
     "OD pairs removed because no path between them exists"
     removed_od_pairs::Vector{Tuple{Int,Int}}
-    "dictionary mapping each destination to a vector of free flow path times for every possible source"
+    "dictionary mapping each destination to a vector of free flow path times for every possible origin"
     destination_free_flow_time::Dict{Int,Vector{Free}}
 
     # cost parameters
