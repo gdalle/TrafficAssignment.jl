@@ -11,7 +11,6 @@ module TrafficAssignment
 const DATASET_NAMES = ["TransportationNetworks", "UnifiedTrafficDataset"]
 
 # outside packages
-using Atomix
 using BinDeps: unpack_cmd
 using Colors
 using CSV: CSV
