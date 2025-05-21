@@ -92,7 +92,9 @@ function TrafficAssignmentProblem(
     if !(dataset_name in DATASET_NAMES)
         throw(ArgumentError("The dataset name must be one of $DATASET_NAMES"))
     end
-    return _TrafficAssignmentProblem(Val(Symbol(dataset_name)), instance_name; kwargs...)
+    pb = _TrafficAssignmentProblem(Val(Symbol(dataset_name)), instance_name; kwargs...)
+    postprocess!(pb)
+    return pb
 end
 
 function _TrafficAssignmentProblem(
@@ -159,6 +161,8 @@ function _TrafficAssignmentProblem(
     I = net_df[!, :init_node]
     J = net_df[!, :term_node]
 
+    link_id = sparse(I, J, ones(Int, m), n, n)
+    nonzeros(link_id) .= 1:nnz(link_id)  # doubles
     link_capacity = sparse(I, J, float.(net_df[!, :capacity]), n, n)
     link_length = sparse(I, J, float.(net_df[!, :length]), n, n)
     link_free_flow_time = sparse(I, J, float.(net_df[!, :free_flow_time]), n, n)
@@ -219,9 +223,15 @@ function _TrafficAssignmentProblem(
             end
         end
     end
+    origins_destinations = collect(keys(demand))
+    origins = unique(map(first, origins_destinations))
+    destinations = unique(map(last, origins_destinations))
+    removed_od_pairs = Tuple{Int,Int}[]
 
     @assert nb_zones_trip == nb_zones # Check if nb_zone is same in both txt files
     @assert total_od_flow > 0
+
+    destination_free_flow_time = Dict{Int,Vector{Float64}}()
 
     # node table
 
@@ -278,6 +288,7 @@ function _TrafficAssignmentProblem(
         node_coord,
         valid_longitude_latitude,
         # links
+        link_id,
         link_capacity,
         link_length,
         link_free_flow_time,
@@ -288,6 +299,10 @@ function _TrafficAssignmentProblem(
         link_type,
         # demand
         demand,
+        origins,
+        destinations,
+        removed_od_pairs,
+        destination_free_flow_time,
         # cost
         toll_factor,
         distance_factor,
@@ -337,8 +352,10 @@ function _TrafficAssignmentProblem(
 
     nb_links = size(link_df, 1)
 
-    n = nb_nodes
+    n, m = nb_nodes, nb_links
     I, J = link_df[!, :New_Node_ID_From], link_df[!, :New_Node_ID_To]
+    link_id = sparse(I, J, ones(Int, m), n, n)
+    nonzeros(link_id) .= 1:m
     link_capacity = sparse(I, J, link_df[!, :Capacity], n, n)
     link_length = sparse(I, J, link_df[!, :Length], n, n)
     link_free_flow_time = sparse(I, J, link_df[!, :Free_Flow_Time], n, n)
@@ -377,6 +394,11 @@ function _TrafficAssignmentProblem(
         collect(zip(od_df[!, :New_Node_ID_O], od_df[!, :New_Node_ID_D])) .=>
             od_df[!, :OD_Number],
     )
+    origins_destinations = collect(keys(demand))
+    origins = unique(map(first, origins_destinations))
+    destinations = unique(map(last, origins_destinations))
+    removed_od_pairs = Tuple{Int,Int}[]
+    destination_free_flow_time = Dict{Int,Vector{Float64}}()
 
     # solution
 
@@ -455,6 +477,7 @@ function _TrafficAssignmentProblem(
         node_coord,
         valid_longitude_latitude=true,
         # links
+        link_id,
         link_capacity,
         link_length,
         link_free_flow_time,
@@ -465,12 +488,49 @@ function _TrafficAssignmentProblem(
         link_type,
         # demand
         demand,
+        origins,
+        destinations,
+        removed_od_pairs,
+        destination_free_flow_time,
         # cost
         toll_factor=missing,
         distance_factor=missing,
         # solution
         optimal_flow,
     )
+end
+
+"""
+    postprocess!(pb)
+
+Perform some data cleaning on a `TrafficAssignmentProblem`:
+
+  - precompute free flow times to every destination present in the demand
+  - remove OD pairs without a path between them (the free flow time is infinite)
+"""
+function postprocess!(pb::TrafficAssignmentProblem)
+    (;
+        link_id,
+        link_free_flow_time,
+        demand,
+        destinations,
+        destination_free_flow_time,
+        removed_od_pairs,
+    ) = pb
+    W = eltype(link_free_flow_time)
+    g_rev = SimpleWeightedDiGraph(transpose(link_free_flow_time), transpose(link_id))
+    @tasks for d in destinations
+        @set collect = true
+        @local storage = DijkstraStorage(g_rev)
+        dijkstra!(storage, g_rev, d)
+        @one_by_one destination_free_flow_time[d] = copy(storage.dists)
+    end
+    for (o, d) in keys(demand)
+        if destination_free_flow_time[d][o] == typemax(W)
+            push!(removed_od_pairs, (o, d))
+            delete!(demand, (o, d))  # modifies the instance
+        end
+    end
 end
 
 """

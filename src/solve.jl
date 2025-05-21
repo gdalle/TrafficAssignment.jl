@@ -48,42 +48,38 @@ function social_cost(problem::TrafficAssignmentProblem, flow::AbstractMatrix)
     return dot(link_travel_time(problem, flow), flow)
 end
 
-struct ShortestPathOracle{P<:TrafficAssignmentProblem,H} <:
+struct ShortestPathOracle{P<:TrafficAssignmentProblem} <:
        FrankWolfe.LinearMinimizationOracle
     problem::P
-    heuristic_dists::H
-end
-
-function ShortestPathOracle(problem::TrafficAssignmentProblem)
-    (; link_free_flow_time, demand) = problem
-    revgraph = SimpleWeightedDiGraph(transpose(link_free_flow_time))
-    heuristic_dists = Dict{Int,Vector{Float64}}()
-    for (o, d) in keys(demand)
-        if !haskey(heuristic_dists, d)
-            spt = dijkstra_shortest_paths(revgraph, d)
-            heuristic_dists[d] = spt.dists
-        end
-    end
-    return ShortestPathOracle(problem, heuristic_dists)
 end
 
 function FrankWolfe.compute_extreme_point(
     spo::ShortestPathOracle, cost_vec::AbstractVector; kwargs...
 )
     yield()
-    (; problem, heuristic_dists) = spo
-    (; demand) = problem
+    (; problem) = spo
+    (; link_id, demand, origins, destinations) = problem
     cost = sparse_by_link(problem, cost_vec)
-    graph = SimpleWeightedDiGraph(cost)
-    flow = similar(cost)
-    flow .= 0
-    for (o, d) in keys(demand)
-        path = a_star(graph, o, d, weights(graph), Base.Fix1(getindex, heuristic_dists[d]))
-        for edge in path
-            flow[src(edge), dst(edge)] += demand[o, d]
+    graph = SimpleWeightedDiGraph(cost, link_id)
+    flow_vec = zeros(float(valtype(demand)), length(cost_vec))
+    @tasks for o in origins
+        @local storage = DijkstraStorage(graph)
+        dijkstra!(storage, graph, o)
+        @one_by_one begin
+            for d in destinations
+                if haskey(demand, (o, d))
+                    dem = demand[o, d]
+                    v = d
+                    while v != o
+                        e = storage.edge_ids[v]
+                        flow_vec[e] += dem
+                        v = storage.parents[v]
+                    end
+                end
+            end
         end
     end
-    return mynz(flow)
+    return flow_vec
 end
 
 """

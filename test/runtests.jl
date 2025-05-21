@@ -34,6 +34,10 @@ reldist(a, b) = norm(a - b) / norm(a)
         end
     end
 
+    @testset "Pathfinding" begin
+        include("paths.jl")
+    end
+
     @testset "Parsing" begin
         problem = TrafficAssignmentProblem("TransportationNetworks", "Anaheim")
         @test TA.nb_nodes(problem) == 416

@@ -17,21 +17,24 @@ using CSV: CSV
 using DataDeps: DataDeps, DataDep, @datadep_str
 using DataFrames
 using DataFramesMeta
+using DataStructures
 using DocStringExtensions
 using FrankWolfe
-using Graphs
+using OhMyThreads
 using OrderedCollections
 using Proj
-using SimpleWeightedGraphs
 # standard libraries
 using Distributed
 using Printf
 using LinearAlgebra
+using LinearAlgebra: checksquare
 using SparseArrays
 using Statistics
 
 include("download.jl")
 include("types.jl")
+include("graph.jl")
+include("paths.jl")
 include("read.jl")
 include("solve.jl")
 include("plot.jl")
