@@ -43,7 +43,7 @@ include("plot.jl")
 export TrafficAssignmentProblem
 export nb_nodes, nb_links, nb_zones
 export list_instances, summarize_instances
-export dijkstra, astar
+export dijkstra
 export solve_frank_wolfe, social_cost
 export plot_network
 
