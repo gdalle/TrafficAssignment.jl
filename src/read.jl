@@ -161,8 +161,8 @@ function _TrafficAssignmentProblem(
     I = net_df[!, :init_node]
     J = net_df[!, :term_node]
 
-    link_id = sparse(I, J, zeros(Int, m), n, n)
-    nonzeros(link_id) .= 1:m
+    link_id = sparse(I, J, ones(Int, m), n, n)
+    nonzeros(link_id) .= 1:nnz(link_id)  # doubles
     link_capacity = sparse(I, J, float.(net_df[!, :capacity]), n, n)
     link_length = sparse(I, J, float.(net_df[!, :length]), n, n)
     link_free_flow_time = sparse(I, J, float.(net_df[!, :free_flow_time]), n, n)
@@ -354,7 +354,7 @@ function _TrafficAssignmentProblem(
 
     n, m = nb_nodes, nb_links
     I, J = link_df[!, :New_Node_ID_From], link_df[!, :New_Node_ID_To]
-    link_id = sparse(I, J, zeros(Int, m), n, n)
+    link_id = sparse(I, J, ones(Int, m), n, n)
     nonzeros(link_id) .= 1:m
     link_capacity = sparse(I, J, link_df[!, :Capacity], n, n)
     link_length = sparse(I, J, link_df[!, :Length], n, n)
@@ -584,16 +584,16 @@ function summarize_instances(dataset_name::AbstractString)
         yield()
         valid = false
         nn, nl, nz = (-1, -1, -1)
-        try
+        # try
             problem = TrafficAssignmentProblem(dataset_name, instance_name)
             valid = true
             nn = nb_nodes(problem)
             nl = nb_links(problem)
             nz = nb_zones(problem)
-        catch exception
-            @warn "Loading $instance_name from $dataset_name failed" exception
-            # nothing
-        end
+        # catch exception
+        #     @warn "Loading $instance_name from $dataset_name failed" exception
+        #     # nothing
+        # end
         push!(
             df,
             (;
