@@ -23,5 +23,8 @@ end
 
 @testitem "Doctests" begin
     using Documenter
+    DocMeta.setdocmeta!(
+        TrafficAssignment, :DocTestSetup, :(using TrafficAssignment); recursive=true
+    )
     Documenter.doctest(TrafficAssignment)
 end
