@@ -2,6 +2,9 @@ using TestItems
 
 @testitem "Comparing results" begin
     import TrafficAssignment as TA
+    using LinearAlgebra
+
+    reldist(a, b) = norm(a - b) / norm(a)
 
     @testset "Sioux Falls" begin
         problem = TrafficAssignmentProblem("TransportationNetworks", "SiouxFalls")
