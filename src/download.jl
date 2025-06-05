@@ -16,7 +16,19 @@ function __init__()
         remote_path1,
         hash1;
         fetch_method=DataDeps.fetch_default,
-        post_fetch_method=_unpack_all1,
+        post_fetch_method=zip_file -> begin
+            DataDeps.unpack(zip_file; keep_originals=false)
+            # decompress potential zip files inside each instance
+            for instance_dir in
+                readdir("TransportationNetworks-$LAST_COMMIT_SHA"; join=true)
+                isdir(instance_dir) || continue
+                for potential_zip_file in readdir(instance_dir; join=true)
+                    if endswith(potential_zip_file, ".zip")
+                        run(unpack_cmd(potential_zip_file, instance_dir, ".zip", ""))
+                    end
+                end
+            end
+        end,
     )
     DataDeps.register(datadep1)
 
@@ -40,19 +52,6 @@ function __init__()
     )
     DataDeps.register(datadep2)
     return nothing
-end
-
-function _unpack_all1(zip_file)
-    DataDeps.unpack(zip_file; keep_originals=false)
-    # decompress potential zip files inside each instance
-    for instance_dir in readdir("TransportationNetworks-$LAST_COMMIT_SHA"; join=true)
-        isdir(instance_dir) || continue
-        for potential_zip_file in readdir(instance_dir; join=true)
-            if endswith(potential_zip_file, ".zip")
-                run(unpack_cmd(potential_zip_file, instance_dir, ".zip", ""))
-            end
-        end
-    end
 end
 
 """

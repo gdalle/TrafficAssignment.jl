@@ -1,10 +1,9 @@
-using TrafficAssignment
-using SimpleWeightedGraphs
-using Graphs
-using SparseArrays
-using Test
+using TestItems
 
-@testset "Dijkstra" begin
+@testitem "Dijkstra" begin
+    using Graphs, SimpleWeightedGraphs
+    using SparseArrays
+
     for p in 0.01:0.01:0.1
         w = sprand(100, 100, p)
         id = similar(w, Int)
@@ -16,4 +15,9 @@ using Test
         d2 = TrafficAssignment.dijkstra(g2, 1).dists
         @test d1 == d2
     end
+end
+
+@testitem "Boo" begin
+    using Graphs
+    @test 1 == 1
 end

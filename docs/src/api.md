@@ -2,7 +2,6 @@
 
 ```@meta
 CollapsedDocStrings = true
-CurrentModule = TrafficAssignment
 ```
 
 ## Public

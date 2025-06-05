@@ -61,7 +61,9 @@ SimpleWeightedGraphs = "1.5.0"
 SparseArrays = "1"
 Statistics = "1"
 Test = "1"
-Tyler = "0.2.1"
+TestItemRunner = "1.1.0"
+TestItems = "1.0.0"
+Tyler = "0.2.2"
 julia = "1.10"
 
 [extras]
@@ -78,6 +80,26 @@ Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 SimpleWeightedGraphs = "47aef6b3-ad0c-573a-a1e2-d07658019622"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TestItemRunner = "f8b46487-2199-4994-9208-9a1283c18c0a"
+TestItems = "1c621080-faea-4a02-84b6-bbd5e436b8fe"
+Tyler = "e170d443-b9d6-418a-9ee8-061e966341ef"
 
 [targets]
-test = ["Aqua", "CairoMakie", "DelimitedFiles", "Documenter", "FrankWolfe", "Graphs", "JET", "JuliaFormatter", "LinearAlgebra", "Pkg", "SimpleWeightedGraphs", "SparseArrays", "Test"]
+test = [
+    "Aqua",
+    "CairoMakie",
+    "DelimitedFiles",
+    "Documenter",
+    "FrankWolfe",
+    "Graphs",
+    "JET",
+    "JuliaFormatter",
+    "LinearAlgebra",
+    "Pkg",
+    "SimpleWeightedGraphs",
+    "SparseArrays",
+    "Test",
+    "TestItems",
+    "TestItemRunner",
+    "Tyler",
+]
