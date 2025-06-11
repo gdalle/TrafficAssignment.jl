@@ -57,7 +57,7 @@ function FrankWolfe.compute_extreme_point(
     (; link_id, demand, origins, destinations) = problem
     cost = sparse_by_link(problem, cost_vec)
     graph = SimpleWeightedDiGraph(cost, link_id)
-    flow_vec = fill(one(float(valtype(demand))), length(cost_vec))
+    flow_vec = zeros(float(valtype(demand)), length(cost_vec))
     @tasks for o in origins
         @local storage = DijkstraStorage(graph)
         dijkstra!(storage, graph, o)
