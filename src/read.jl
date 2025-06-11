@@ -167,20 +167,12 @@ function _TrafficAssignmentProblem(
     link_length = sparse(I, J, float.(net_df[!, :length]), n, n)
     link_free_flow_time = sparse(I, J, float.(net_df[!, :free_flow_time]), n, n)
     link_speed_limit = sparse(I, J, float.(net_df[!, :speed]), n, n)
-    if ==(extrema(net_df[!, :b])...)
-        link_bpr_mult = float(first(net_df[!, :b]))  # single b value
-    else
-        link_bpr_mult = sparse(I, J, float.(net_df[!, :b]), n, n)
-    end
-    if ==(extrema(net_df[!, :power])...)
-        link_bpr_power = float(first(net_df[!, :power]))  # single power value
-    else
-        link_bpr_power = sparse(I, J, float.(net_df[!, :power]), n, n)
-    end
+    link_bpr_mult = sparse(I, J, float.(net_df[!, :b]), n, n)
+    link_bpr_power = sparse(I, J, float.(net_df[!, :power]), n, n)
     if "toll" in names(net_df)
         link_toll = sparse(I, J, float.(net_df[!, :toll]), n, n)
     else
-        link_toll = missing
+        link_toll = similar(link_capacity, Missing)
     end
     if "link_type" in names(net_df)
         link_type_nzval = if eltype(net_df[!, :link_type]) <: AbstractString
@@ -191,7 +183,7 @@ function _TrafficAssignmentProblem(
         end
         link_type = sparse(I, J, link_type_nzval, n, n)
     else
-        link_type = missing
+        link_type = similar(link_capacity, Missing)
     end
 
     # trips table
@@ -263,7 +255,7 @@ function _TrafficAssignmentProblem(
             valid_longitude_latitude = false
         end
     else
-        node_coord = missing
+        node_coord = fill(missing, n)
         valid_longitude_latitude = false
     end
 
@@ -273,7 +265,7 @@ function _TrafficAssignmentProblem(
         optimal_flow = sparse(I, J, optimal_flow_df[!, "Volume "], n, n)
         optimal_flow_cost = sparse(I, J, optimal_flow_df[!, "Cost "], n, n)
     else
-        optimal_flow = missing
+        optimal_flow = similar(link_capacity, Missing)
         optimal_flow_cost = missing
     end
 
@@ -366,12 +358,12 @@ function _TrafficAssignmentProblem(
         CSV.File(joinpath(dirname(@__DIR__), "data", "UnifiedTrafficDataset", "bpr.csv"))
     )
 
-    link_bpr_mult = only(
-        @rsubset(bpr_df, :city == underscored_instance_name)[!, :bpr_alpha]
-    )
-    link_bpr_power = only(
-        @rsubset(bpr_df, :city == underscored_instance_name)[!, :bpr_beta]
-    )
+    α = only(@rsubset(bpr_df, :city == underscored_instance_name)[!, :bpr_alpha])
+    β = only(@rsubset(bpr_df, :city == underscored_instance_name)[!, :bpr_beta])
+    link_bpr_mult = sparse(I, J, fill(α, m), n, n)
+    link_bpr_power = sparse(I, J, fill(β, m), n, n)
+
+    link_toll = similar(link_capacity, Missing)
 
     # demand
 
@@ -463,7 +455,7 @@ function _TrafficAssignmentProblem(
         )
         optimal_flow = dropzeros(optimal_flow_AB) + dropzeros(optimal_flow_BA)
     else
-        optimal_flow = missing
+        optimal_flow = similar(link_capacity, Missing)
     end
 
     return TrafficAssignmentProblem(;
@@ -484,7 +476,7 @@ function _TrafficAssignmentProblem(
         link_speed_limit,
         link_bpr_mult,
         link_bpr_power,
-        link_toll=missing,
+        link_toll,
         link_type,
         # demand
         demand,

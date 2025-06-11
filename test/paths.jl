@@ -16,8 +16,3 @@ using TestItems
         @test d1 == d2
     end
 end
-
-@testitem "Boo" begin
-    using Graphs
-    @test 1 == 1
-end

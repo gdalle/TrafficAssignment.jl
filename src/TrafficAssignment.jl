@@ -42,7 +42,7 @@ include("plot.jl")
 export TrafficAssignmentProblem
 export nb_nodes, nb_links, nb_zones
 export list_instances, summarize_instances
-export solve_frank_wolfe, social_cost
+export solve_frank_wolfe, social_cost, price_of_anarchy
 export plot_network
 
 end # module
