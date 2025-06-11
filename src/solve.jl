@@ -30,6 +30,16 @@ function _objective(
     return s
 end
 
+function _objective_vec(
+    problem::TrafficAssignmentProblem, control::Val, flow_vec::AbstractVector
+)
+    (; link_free_flow_time, link_bpr_mult, link_capacity, link_bpr_power) = problem
+    t0, c = mynz(link_free_flow_time), mynz(link_capacity)
+    α, β = mynz(link_bpr_mult), mynz(link_bpr_power)
+    f = flow_vec
+    return sum(_edge_obj.(control, f, t0, α, β, c))
+end
+
 function _gradient!(
     g::AbstractVector,
     problem::TrafficAssignmentProblem,
@@ -42,6 +52,16 @@ function _gradient!(
     f = flow_vec
     g .= _edge_grad.(control, f, t0, α, β, c)
     return nothing
+end
+
+function _gradient(
+    problem::TrafficAssignmentProblem, control::Val, flow_vec::AbstractVector
+)
+    (; link_free_flow_time, link_bpr_mult, link_capacity, link_bpr_power) = problem
+    t0, c = mynz(link_free_flow_time), mynz(link_capacity)
+    α, β = mynz(link_bpr_mult), mynz(link_bpr_power)
+    f = flow_vec
+    return _edge_grad.(control, f, t0, α, β, c)
 end
 
 struct ShortestPathOracle{P<:TrafficAssignmentProblem} <:
@@ -58,19 +78,17 @@ function FrankWolfe.compute_extreme_point(
     cost = sparse_by_link(problem, cost_vec)
     graph = SimpleWeightedDiGraph(cost, link_id)
     flow_vec = zeros(float(valtype(demand)), length(cost_vec))
-    @tasks for o in origins
-        @local storage = DijkstraStorage(graph)
+    storage = DijkstraStorage(graph)
+    for o in origins
         dijkstra!(storage, graph, o)
-        @one_by_one begin
-            for d in destinations
-                if haskey(demand, (o, d))
-                    dem = demand[o, d]
-                    v = d
-                    while v != o
-                        e = storage.edge_ids[v]
-                        flow_vec[e] += dem
-                        v = storage.parents[v]
-                    end
+        for d in destinations
+            if haskey(demand, (o, d))
+                dem = demand[o, d]
+                v = d
+                while v != o
+                    e = storage.edge_ids[v]
+                    flow_vec[e] += dem
+                    v = storage.parents[v]
                 end
             end
         end

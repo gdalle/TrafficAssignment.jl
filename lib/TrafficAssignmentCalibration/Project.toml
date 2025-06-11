@@ -1,0 +1,21 @@
+name = "TrafficAssignmentCalibration"
+uuid = "1a5f5453-5f1b-4994-a47a-67ebe2d894ff"
+authors = ["Guillaume Dalle <22795598+gdalle@users.noreply.github.com>"]
+version = "0.1.0"
+
+[deps]
+Accessors = "7d9f7c33-5ae7-4f3b-8dc6-eff91059b697"
+DifferentiableFrankWolfe = "b383313e-5450-4164-a800-befbd27b574d"
+FrankWolfe = "f55ce6ea-fdc5-4628-88c5-0087fe54bd30"
+ImplicitDifferentiation = "57b37032-215b-411a-8a7c-41a003a55207"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+TrafficAssignment = "735ffce8-66c7-5b61-a90f-89c46d1a79d5"
+Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
+
+[compat]
+Accessors = "0.1.42"
+DifferentiableFrankWolfe = "0.5.0"
+FrankWolfe = "0.5.1"
+ImplicitDifferentiation = "0.8.0"
+SparseArrays = "1.11.0"
+Zygote = "0.7.9"
