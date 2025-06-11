@@ -23,16 +23,16 @@ where
 $(TYPEDFIELDS)
 """
 @kwdef struct TrafficAssignmentProblem{
-    Coord<:Union{Missing,Vector{<:NTuple{2,<:Number}}},
+    Coord<:Union{Missing,NTuple{2,Number}},
     Capa<:Number,
     Length<:Number,
     Free<:Number,
     Speed<:Number,
-    BPRMult<:Union{Number,SparseMatrixCSC{<:Number}},
-    BPRPow<:Union{Number,SparseMatrixCSC{<:Number}},
-    Toll<:Union{Missing,SparseMatrixCSC{<:Number}},
-    LinkT<:Union{Missing,SparseMatrixCSC{<:Integer}},
-    Flow<:Union{Missing,SparseMatrixCSC{<:Number}},
+    BPRMult<:Number,
+    BPRPow<:Number,
+    Toll<:Union{Missing,Number},
+    LinkT<:Any,
+    Flow<:Union{Missing,Number},
     Dem<:Number,
     TF<:Union{Number,Missing},
     DF<:Union{Number,Missing},
@@ -52,7 +52,7 @@ $(TYPEDFIELDS)
     "interval of nodes that correspond to artificial zones"
     zone_nodes::UnitRange{Int}
     "coordinates of the nodes for plotting"
-    node_coord::Coord
+    node_coord::Vector{Coord}
     "whether `node_coord` corresponds to the longitude and latitude"
     valid_longitude_latitude::Bool
 
@@ -68,13 +68,13 @@ $(TYPEDFIELDS)
     "matrix of link speed limits"
     link_speed_limit::SparseMatrixCSC{Speed,Int}
     "link multiplicative factors `α` in the BPR formula, either a single scalar or a matrix"
-    link_bpr_mult::BPRMult
+    link_bpr_mult::SparseMatrixCSC{BPRMult,Int}
     "link exponents `β` in the BPR formula, either a single scalar or a matrix"
-    link_bpr_power::BPRPow
+    link_bpr_power::SparseMatrixCSC{BPRPow,Int}
     "matrix of link tolls"
-    link_toll::Toll
+    link_toll::SparseMatrixCSC{Toll,Int}
     "matrix of link types"
-    link_type::LinkT
+    link_type::SparseMatrixCSC{LinkT,Int}
 
     # demand
     "demand by OD pair"
@@ -96,7 +96,7 @@ $(TYPEDFIELDS)
 
     # solution
     "provided matrix of optimal link flows"
-    optimal_flow::Flow
+    optimal_flow::SparseMatrixCSC{Flow,Int}
 end
 
 function Base.show(io::IO, problem::TrafficAssignmentProblem)
