@@ -116,7 +116,7 @@ function TrafficAssignment.plot_network(
     show_zones = Toggle(fig[2, 4]; active=zones, tellwidth=false)
     show_network = Toggle(fig[3, 2]; active=true, tellwidth=false)
     show_edge_quantity = Toggle(
-        fig[3, 4]; active=!isnothing(edge_quantity), tellwidth=false
+        fig[3, 4]; active=(!isnothing(edge_quantity)), tellwidth=false
     )
 
     # actual plotting
