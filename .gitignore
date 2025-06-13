@@ -4,3 +4,5 @@ Manifest.toml
 /docs/src/index.md
 playground.jl
 *.tntp
+*.png
+*.jpg
