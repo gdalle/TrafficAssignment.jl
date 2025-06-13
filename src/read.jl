@@ -503,13 +503,14 @@ function postprocess!(pb::TrafficAssignmentProblem)
         destinations,
         destination_free_flow_time,
         removed_od_pairs,
+        zone_nodes,
     ) = pb
     W = eltype(link_free_flow_time)
     g_rev = SimpleWeightedDiGraph(transpose(link_free_flow_time), transpose(link_id))
     @tasks for d in destinations
         @set collect = true
         @local storage = DijkstraStorage(g_rev)
-        dijkstra!(storage, g_rev, d)
+        dijkstra!(storage, g_rev, d; forbidden_intermediate_vertices=zone_nodes)
         @one_by_one destination_free_flow_time[d] = copy(storage.dists)
     end
     for (o, d) in keys(demand)
