@@ -32,7 +32,7 @@ TrafficAssignmentMakieExt = "Makie"
 TrafficAssignmentTylerExt = ["Makie", "Tyler"]
 
 [compat]
-Aqua = "0.8.11"
+Aqua = "0.8.12"
 BinDeps = "1.0.2"
 CSV = "0.10.15"
 CairoMakie = "0.13.4"
@@ -51,7 +51,7 @@ JET = "0.9"
 JuliaFormatter = "2.1"
 Libdl = "1"
 LinearAlgebra = "1"
-Makie = "0.22.4"
+Makie = "0.23"
 OhMyThreads = "0.8.3"
 OrderedCollections = "1.1"
 Pkg = "1"
@@ -85,4 +85,21 @@ TestItems = "1c621080-faea-4a02-84b6-bbd5e436b8fe"
 Tyler = "e170d443-b9d6-418a-9ee8-061e966341ef"
 
 [targets]
-test = ["Aqua", "CairoMakie", "DelimitedFiles", "Documenter", "FrankWolfe", "Graphs", "JET", "JuliaFormatter", "LinearAlgebra", "Pkg", "SimpleWeightedGraphs", "SparseArrays", "Test", "TestItems", "TestItemRunner", "Tyler"]
+test = [
+    "Aqua",
+    "CairoMakie",
+    "DelimitedFiles",
+    "Documenter",
+    "FrankWolfe",
+    "Graphs",
+    "JET",
+    "JuliaFormatter",
+    "LinearAlgebra",
+    "Pkg",
+    "SimpleWeightedGraphs",
+    "SparseArrays",
+    "Test",
+    "TestItems",
+    "TestItemRunner",
+    "Tyler",
+]

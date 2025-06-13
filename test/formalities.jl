@@ -2,7 +2,7 @@ using TestItems
 
 @testitem "Aqua" begin
     using Aqua
-    Aqua.test_all(TrafficAssignment; test_undocumented_names=true)
+    Aqua.test_all(TrafficAssignment; undocumented_names=true)
 end
 
 @testitem "JET" begin
