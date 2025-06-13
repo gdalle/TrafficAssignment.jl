@@ -15,8 +15,8 @@ using TestItems
     @test TA.nb_zones(problem) == 194
     @test startswith(string(problem), "Traffic")
 
-    pb1 = TrafficAssignmentProblem(Unified, "San Francisco"; solution="TransCAD")
-    pb2 = TrafficAssignmentProblem(Unified, "San Francisco"; solution="AequilibraE")
+    pb1 = TrafficAssignmentProblem(Unified, "San Francisco"; solution_software=TransCAD)
+    pb2 = TrafficAssignmentProblem(Unified, "San Francisco"; solution_software=AequilibraE)
 end
 
 @testitem "Read all instances" begin

@@ -1,11 +1,3 @@
-"""
-    TrafficAssignment
-
-A Julia package for studying traffic assignment problems, using instaces from two datasets:
-
-  - `"TransportationNetworks"`, available at [https://github.com/bstabler/TransportationNetworks](https://github.com/bstabler/TransportationNetworks)
-  - `"Unified"`, available at [https://figshare.com/articles/dataset/A_unified_and_validated_traffic_dataset_for_20_U_S_cities/24235696](https://figshare.com/articles/dataset/A_unified_and_validated_traffic_dataset_for_20_U_S_cities/24235696)
-"""
 module TrafficAssignment
 
 """
