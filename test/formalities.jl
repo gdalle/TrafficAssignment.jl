@@ -2,7 +2,7 @@ using TestItems
 
 @testitem "Aqua" begin
     using Aqua
-    Aqua.test_all(TrafficAssignment)
+    Aqua.test_all(TrafficAssignment; undocumented_names=true)
 end
 
 @testitem "JET" begin
@@ -13,12 +13,6 @@ end
 @testitem "JuliaFormatter" begin
     using JuliaFormatter
     @test JuliaFormatter.format(TrafficAssignment; overwrite=false)
-end
-
-@testitem "Undocumented names" begin
-    if isdefined(Base.Docs, :undocumented_names)
-        @test isempty(Base.Docs.undocumented_names(TrafficAssignment))
-    end
 end
 
 @testitem "Doctests" begin

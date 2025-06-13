@@ -24,7 +24,12 @@ function reset!(storage::DijkstraStorage{W,T}) where {W,T}
     return nothing
 end
 
-function dijkstra!(storage::DijkstraStorage, g::SimpleWeightedDiGraph, s::Integer)
+function dijkstra!(
+    storage::DijkstraStorage,
+    g::SimpleWeightedDiGraph,
+    s::Integer;
+    forbidden_intermediate_vertices,
+)
     T, W = vertex_type(g), weight_type(g)
     reset!(storage)
     (; heap, parents, edge_ids, dists) = storage
@@ -33,6 +38,9 @@ function dijkstra!(storage::DijkstraStorage, g::SimpleWeightedDiGraph, s::Intege
     # Main loop
     while !isempty(heap)
         u, Δu = pop!(heap)
+        if u != s && u in forbidden_intermediate_vertices
+            continue
+        end
         if Δu <= dists[u]
             dists[u] = Δu
             for (v, w_uv, e_uv) in outneighbors_weights_edgeids(g, u)
@@ -47,8 +55,8 @@ function dijkstra!(storage::DijkstraStorage, g::SimpleWeightedDiGraph, s::Intege
     end
 end
 
-function dijkstra(g::SimpleWeightedDiGraph, s::Integer)
+function dijkstra(g::SimpleWeightedDiGraph, s::Integer; forbidden_intermediate_vertices=())
     storage = DijkstraStorage(g)
-    dijkstra!(storage, g, s)
+    dijkstra!(storage, g, s; forbidden_intermediate_vertices)
     return storage
 end

@@ -2,8 +2,8 @@ using Documenter
 using TrafficAssignment
 ENV["DATADEPS_ALWAYS_ACCEPT"] = true
 
-TrafficAssignmentProblem("TransportationNetworks", "SiouxFalls")
-TrafficAssignmentProblem("UnifiedTrafficDataset", "San Francisco")
+TrafficAssignmentProblem(TransportationNetworks, "SiouxFalls")
+TrafficAssignmentProblem(Unified, "San Francisco")
 
 cp(joinpath(@__DIR__, "..", "README.md"), joinpath(@__DIR__, "src", "index.md"); force=true)
 
