@@ -55,7 +55,7 @@ function dijkstra!(
     end
 end
 
-function dijkstra(g::SimpleWeightedDiGraph, s::Integer; forbidden_intermediate_vertices)
+function dijkstra(g::SimpleWeightedDiGraph, s::Integer; forbidden_intermediate_vertices=())
     storage = DijkstraStorage(g)
     dijkstra!(storage, g, s; forbidden_intermediate_vertices)
     return storage
