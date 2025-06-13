@@ -3,24 +3,20 @@ using TestItems
 @testitem "Parsing" begin
     import TrafficAssignment as TA
 
-    problem = TrafficAssignmentProblem("TransportationNetworks", "Anaheim")
+    problem = TrafficAssignmentProblem(TransportationNetworks, "Anaheim")
     @test TA.nb_nodes(problem) == 416
     @test TA.nb_links(problem) == 914
     @test TA.nb_zones(problem) == 38
     @test startswith(string(problem), "Traffic")
 
-    problem = TrafficAssignmentProblem("UnifiedTrafficDataset", "San Francisco")
+    problem = TrafficAssignmentProblem(Unified, "San Francisco")
     @test TA.nb_nodes(problem) == 4986
     @test TA.nb_links(problem) == 18002
     @test TA.nb_zones(problem) == 194
     @test startswith(string(problem), "Traffic")
 
-    pb1 = TrafficAssignmentProblem(
-        "UnifiedTrafficDataset", "San Francisco"; solution="TransCAD"
-    )
-    pb2 = TrafficAssignmentProblem(
-        "UnifiedTrafficDataset", "San Francisco"; solution="AequilibraE"
-    )
+    pb1 = TrafficAssignmentProblem(Unified, "San Francisco"; solution="TransCAD")
+    pb2 = TrafficAssignmentProblem(Unified, "San Francisco"; solution="AequilibraE")
 end
 
 @testitem "Read all instances" begin

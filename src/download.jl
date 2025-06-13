@@ -32,7 +32,7 @@ function __init__()
     )
     DataDeps.register(datadep1)
 
-    name2 = "UnifiedTrafficDataset"
+    name2 = "Unified"
     message2 = """
     This is a unified and validated traffic dataset for 20 U.S. cities.
     - Paper: <https://www.nature.com/articles/s41597-024-03149-8>
@@ -55,24 +55,21 @@ function __init__()
 end
 
 """
-    datapath(dataset_name)
-    datapath(dataset_name, instance_name)
+    datapath(dataset::TrafficAssignmentDataset)
+    datapath(dataset::TrafficAssignmentDataset, instance_name::AbstractString)
 
 Return the absolute path to the raw data.
-
-The `dataset_name` must be one of `$DATASET_NAMES`.
 """
-function datapath(dataset_name::AbstractString)
-    if dataset_name == "TransportationNetworks"
+function datapath(dataset::TrafficAssignmentDataset)
+    if dataset == TransportationNetworks
         return joinpath(
             datadep"TransportationNetworks", "TransportationNetworks-$LAST_COMMIT_SHA"
         )
     else
-        @assert dataset_name == "UnifiedTrafficDataset"
-        return datadep"UnifiedTrafficDataset"
+        return datadep"Unified"
     end
 end
 
-function datapath(dataset_name::AbstractString, instance_name::AbstractString)
-    return joinpath(datapath(dataset_name), instance_name)
+function datapath(dataset::TrafficAssignmentDataset, instance_name::AbstractString)
+    return joinpath(datapath(dataset), instance_name)
 end

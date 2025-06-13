@@ -37,8 +37,8 @@ $(TYPEDFIELDS)
     TF<:Union{Number,Missing},
     DF<:Union{Number,Missing},
 }
-    "name of the dataset, one of `$DATASET_NAMES`"
-    dataset_name::String
+    "name of the dataset"
+    dataset::TrafficAssignmentDataset
     "name of the instance (subfolder inside the dataset)"
     instance_name::String
 
@@ -95,6 +95,8 @@ $(TYPEDFIELDS)
     distance_factor::DF
 
     # solution
+    "software used to compute the provided solution, if known"
+    solution_software::Union{TrafficAssignmentSoftware,Missing}
     "provided matrix of optimal link flows"
     optimal_flow::SparseMatrixCSC{Flow,Int}
 end
