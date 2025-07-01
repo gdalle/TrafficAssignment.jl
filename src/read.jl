@@ -1,14 +1,14 @@
 """
-    instance_files(dataset_name, instance_name)
+    instance_files(dataset, instance_name)
 
 Return a named tuple containing the absolute paths to the individual data tables of an instance.
 """
-function instance_files(dataset_name::AbstractString, instance_name::AbstractString)
-    return _instance_files(Val(Symbol(dataset_name)), instance_name)
+function instance_files(dataset::TrafficAssignmentDataset, instance_name::AbstractString)
+    return _instance_files(Val(dataset), instance_name)
 end
 
-function _instance_files(::Val{:TransportationNetworks}, instance_name)
-    instance_dir = datapath("TransportationNetworks", instance_name)
+function _instance_files(::Val{TransportationNetworks}, instance_name)
+    instance_dir = datapath(TransportationNetworks, instance_name)
     @assert ispath(instance_dir)
 
     flow_file = net_file = node_file = trips_file = nothing
@@ -35,11 +35,10 @@ function _instance_files(::Val{:TransportationNetworks}, instance_name)
     return (; flow_file, net_file, node_file, trips_file)
 end
 
-function _instance_files(::Val{:UnifiedTrafficDataset}, instance_name)
-    dataset_name = "UnifiedTrafficDataset"
+function _instance_files(::Val{Unified}, instance_name)
     underscored_instance_name = replace(instance_name, " " => "_")
     instance_dir = ""
-    for potential_instance_dir in readdir(datapath(dataset_name); join=true)
+    for potential_instance_dir in readdir(datapath(Unified); join=true)
         if endswith(potential_instance_dir, underscored_instance_name)
             instance_dir = potential_instance_dir
             break
@@ -75,11 +74,11 @@ function _instance_files(::Val{:UnifiedTrafficDataset}, instance_name)
 end
 
 """
-    TrafficAssignmentProblem(dataset_name, instance_name)
+    TrafficAssignmentProblem(dataset, instance_name)
 
 User-friendly constructor for [`TrafficAssignmentProblem`](@ref).
 
-The dataset must be one of `$DATASET_NAMES`, the instance can be chosen from [`list_instances`](@ref).
+The dataset must be a [`TrafficAssignmentDataset`](@ref), the instance can be chosen from [`list_instances`](@ref).
 
 !!! tip
 
@@ -87,24 +86,21 @@ The dataset must be one of `$DATASET_NAMES`, the instance can be chosen from [`l
     If you want to skip this check, for instance during CI, set the environment variable `ENV["DATADEPS_ALWAYS_ACCEPT"] = true`.
 """
 function TrafficAssignmentProblem(
-    dataset_name::AbstractString, instance_name::AbstractString; kwargs...
+    dataset::TrafficAssignmentDataset, instance_name::AbstractString; kwargs...
 )
-    if !(dataset_name in DATASET_NAMES)
-        throw(ArgumentError("The dataset name must be one of $DATASET_NAMES"))
-    end
-    pb = _TrafficAssignmentProblem(Val(Symbol(dataset_name)), instance_name; kwargs...)
+    pb = _TrafficAssignmentProblem(Val(dataset), instance_name; kwargs...)
     postprocess!(pb)
     return pb
 end
 
 function _TrafficAssignmentProblem(
-    ::Val{:TransportationNetworks},
+    ::Val{TransportationNetworks},
     instance_name,
     toll_factor::Real=0.0,
     distance_factor::Real=0.0,
 )
     (; net_file, trips_file, node_file, flow_file) = instance_files(
-        "TransportationNetworks", instance_name
+        TransportationNetworks, instance_name
     )
     @assert ispath(net_file)
     @assert ispath(trips_file)
@@ -270,7 +266,7 @@ function _TrafficAssignmentProblem(
     end
 
     return TrafficAssignmentProblem(;
-        dataset_name="TransportationNetworks",
+        dataset=TransportationNetworks,
         instance_name,
         # nodes
         nb_nodes,
@@ -299,16 +295,16 @@ function _TrafficAssignmentProblem(
         toll_factor,
         distance_factor,
         # solution
+        solution_software=missing,
         optimal_flow,
     )
 end
 
 function _TrafficAssignmentProblem(
-    ::Val{:UnifiedTrafficDataset}, instance_name; solution=nothing
+    ::Val{Unified}, instance_name; solution_software::TrafficAssignmentSoftware=TransCAD
 )
-    dataset_name = "UnifiedTrafficDataset"
     underscored_instance_name = replace(instance_name, " " => "_")
-    files = TrafficAssignment.instance_files(dataset_name, instance_name)
+    files = TrafficAssignment.instance_files(Unified, instance_name)
 
     # nodes
 
@@ -354,9 +350,7 @@ function _TrafficAssignmentProblem(
     link_speed_limit = sparse(I, J, link_df[!, :Free_Speed], n, n)
     link_type = sparse(I, J, link_df[!, :Link_Type], n, n)
 
-    bpr_df = DataFrame(
-        CSV.File(joinpath(dirname(@__DIR__), "data", "UnifiedTrafficDataset", "bpr.csv"))
-    )
+    bpr_df = DataFrame(CSV.File(joinpath(dirname(@__DIR__), "data", "Unified", "bpr.csv")))
 
     α = only(@rsubset(bpr_df, :city == underscored_instance_name)[!, :bpr_alpha])
     β = only(@rsubset(bpr_df, :city == underscored_instance_name)[!, :bpr_beta])
@@ -394,7 +388,7 @@ function _TrafficAssignmentProblem(
 
     # solution
 
-    if solution == "AequilibraE"
+    if solution_software == AequilibraE
         sol_network_df = DataFrame(CSV.File(files.aequilibrae_network_file))
         sol_assignment_df = DataFrame(CSV.File(files.aequilibrae_assignment_file))
         sol_df = leftjoin(sol_assignment_df, sol_network_df; on=:link_id)
@@ -416,7 +410,7 @@ function _TrafficAssignmentProblem(
         VBA = coalesce.(sol_df[!, :matrix_ba], 0.0)
         optimal_flow =
             dropzeros(sparse(A, B, VAB, n, n)) + dropzeros(sparse(B, A, VBA, n, n))
-    elseif solution == "TransCAD"
+    elseif solution_software == TransCAD
         linkflows_df = DataFrame(CSV.File(files.transcad_linkflows_file))
         linkflows_df = @select(
             linkflows_df,
@@ -459,7 +453,7 @@ function _TrafficAssignmentProblem(
     end
 
     return TrafficAssignmentProblem(;
-        dataset_name="UnifiedTrafficDataset",
+        dataset=Unified,
         instance_name,
         # nodes
         nb_nodes,
@@ -488,6 +482,7 @@ function _TrafficAssignmentProblem(
         toll_factor=missing,
         distance_factor=missing,
         # solution
+        solution_software,
         optimal_flow,
     )
 end
@@ -508,13 +503,14 @@ function postprocess!(pb::TrafficAssignmentProblem)
         destinations,
         destination_free_flow_time,
         removed_od_pairs,
+        zone_nodes,
     ) = pb
     W = eltype(link_free_flow_time)
     g_rev = SimpleWeightedDiGraph(transpose(link_free_flow_time), transpose(link_id))
     @tasks for d in destinations
         @set collect = true
         @local storage = DijkstraStorage(g_rev)
-        dijkstra!(storage, g_rev, d)
+        dijkstra!(storage, g_rev, d; forbidden_intermediate_vertices=zone_nodes)
         @one_by_one destination_free_flow_time[d] = copy(storage.dists)
     end
     for (o, d) in keys(demand)
@@ -527,13 +523,13 @@ end
 
 """
     list_instances()
-    list_instances(dataset_name)
+    list_instances(dataset::TrafficAssignmentDataset)
 
 Return a list of the available instances, given as a tuple with their dataset.
 """
-function list_instances(dataset_name::AbstractString)
-    data_dir = datapath(dataset_name)
-    if dataset_name == "TransportationNetworks"
+function list_instances(dataset::TrafficAssignmentDataset)
+    data_dir = datapath(dataset)
+    if dataset == TransportationNetworks
         instance_names = String[]
         for potential_name in readdir(data_dir)
             isdir(joinpath(data_dir, potential_name)) || continue
@@ -544,61 +540,58 @@ function list_instances(dataset_name::AbstractString)
                 end
             end
         end
-        return [(dataset_name, instance_name) for instance_name in instance_names]
+        return [(dataset, instance_name) for instance_name in instance_names]
     else
         instance_names = String[]
         for underscored_name in readdir(data_dir)
             instance_name = replace(underscored_name[4:end], "_" => " ")
             push!(instance_names, instance_name)
         end
-        return [(dataset_name, instance_name) for instance_name in instance_names]
+        return [(dataset, instance_name) for instance_name in instance_names]
     end
 end
 
-list_instances() = mapreduce(list_instances, vcat, DATASET_NAMES)
+list_instances() = mapreduce(list_instances, vcat, instances(TrafficAssignmentDataset))
 
 """
     summarize_instances()
-    summarize_instances(dataset_name)
+    summarize_instances(dataset::TrafficAssignmentDataset)
 
 Return a `DataFrame` summarizing the dimensions of the available instances inside a datase.
 """
-function summarize_instances(dataset_name::AbstractString)
+function summarize_instances(dataset::TrafficAssignmentDataset)
     df = DataFrame(;
-        dataset=String[],
+        dataset=TrafficAssignmentDataset[],
         instance=String[],
         valid=Bool[],
         nodes=Int[],
         links=Int[],
         zones=Int[],
     )
-    for (_, instance_name) in list_instances(dataset_name)
+    for (_, instance_name) in list_instances(dataset)
         yield()
         valid = false
         nn, nl, nz = (-1, -1, -1)
         try
-            problem = TrafficAssignmentProblem(dataset_name, instance_name)
+            problem = TrafficAssignmentProblem(dataset, instance_name)
             valid = true
             nn = nb_nodes(problem)
             nl = nb_links(problem)
             nz = nb_zones(problem)
         catch exception
-            @warn "Loading $instance_name from $dataset_name failed" exception
+            @warn "Loading $instance_name from $dataset dataset failed" exception
             # nothing
         end
         push!(
             df,
             (;
-                dataset=dataset_name,
-                instance=instance_name,
-                valid,
-                nodes=nn,
-                links=nl,
-                zones=nz,
+                dataset=dataset, instance=instance_name, valid, nodes=nn, links=nl, zones=nz
             ),
         )
     end
     return df
 end
 
-summarize_instances() = mapreduce(summarize_instances, vcat, DATASET_NAMES)
+function summarize_instances()
+    return mapreduce(summarize_instances, vcat, instances(TrafficAssignmentDataset))
+end

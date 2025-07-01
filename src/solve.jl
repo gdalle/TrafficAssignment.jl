@@ -74,21 +74,23 @@ function FrankWolfe.compute_extreme_point(
 )
     yield()
     (; problem) = spo
-    (; link_id, demand, origins, destinations) = problem
+    (; link_id, demand, origins, destinations, zone_nodes) = problem
     cost = sparse_by_link(problem, cost_vec)
     graph = SimpleWeightedDiGraph(cost, link_id)
     flow_vec = zeros(float(valtype(demand)), length(cost_vec))
-    storage = DijkstraStorage(graph)
-    for o in origins
-        dijkstra!(storage, graph, o)
-        for d in destinations
-            if haskey(demand, (o, d))
-                dem = demand[o, d]
-                v = d
-                while v != o
-                    e = storage.edge_ids[v]
-                    flow_vec[e] += dem
-                    v = storage.parents[v]
+    @tasks for o in origins
+        @local storage = DijkstraStorage(graph)
+        dijkstra!(storage, graph, o; forbidden_intermediate_vertices=zone_nodes)
+        @one_by_one begin
+            for d in destinations
+                if haskey(demand, (o, d))
+                    dem = demand[o, d]
+                    v = d
+                    while v != o
+                        e = storage.edge_ids[v]
+                        flow_vec[e] += dem
+                        v = storage.parents[v]
+                    end
                 end
             end
         end

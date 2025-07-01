@@ -13,6 +13,10 @@ If a `flow` is provided, network edges will be colored according to their conges
     This function requires loading one of Makie.jl's backends beforehand, ideally GLMakie.jl.
     Using `tiles=true` requires loading Tyler.jl in addition.
 """
-function plot_network end
+function plot_network(args...; kwargs...)
+    return error("Please load a Makie backend")
+end
 
-function add_tiles! end
+function add_tiles!(args...; kwargs...)
+    return error("Please load Tyler")
+end
