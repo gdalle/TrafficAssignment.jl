@@ -10,27 +10,10 @@ import TrafficAssignment as TA
 
 const WebMercator = "EPSG:3857"
 
-zero_to_inf(x) = ifelse(iszero(x), Inf, x)
-
-function aggregate_symmetric(A::SparseMatrixCSC, I, J, agg::F=max) where {F}
-    nzvals = getindex.(Ref(A), I, J)
-    nzvals_transpose = getindex.(Ref(A), J, I)
-    return agg.(nzvals, nzvals_transpose)
-end
-
-function aggregate_symmetric_normalized(
-    A::SparseMatrixCSC, B::SparseMatrixCSC, I, J, agg::F=max
-) where {F}
-    A_nzvals = getindex.(Ref(A), I, J)
-    B_nzvals = zero_to_inf.(getindex.(Ref(B), I, J))
-    A_nzvals_transpose = getindex.(Ref(A), J, I)
-    B_nzvals_transpose = zero_to_inf.(getindex.(Ref(B), J, I))
-    return agg.(A_nzvals ./ B_nzvals, A_nzvals_transpose ./ B_nzvals_transpose)
-end
-
 function TrafficAssignment.plot_network(
     problem::TrafficAssignmentProblem,
     edge_quantity::Union{Nothing,SparseMatrixCSC}=nothing;
+    offset_ratio=0,
     edge_quantity_type=:flow,
     nodes=false,
     zones=false,
@@ -55,7 +38,7 @@ function TrafficAssignment.plot_network(
     end
 
     # link filtering
-    I, J, _ = findnz(tril(link_capacity + transpose(link_capacity)))
+    I, J, _ = findnz(link_capacity)
 
     IJ_real = [(i, j) for (i, j) in zip(I, J) if i in real_nodes && j in real_nodes]
     I_real, J_real = first.(IJ_real), last.(IJ_real)
@@ -67,7 +50,32 @@ function TrafficAssignment.plot_network(
     real_points = Point2f.(X[real_nodes], Y[real_nodes])
     real_start_points = Point2f.(X[I_real], Y[I_real])
     real_end_points = Point2f.(X[J_real], Y[J_real])
+
+    X_q1 = (3 .* X[I_real] .+ X[J_real]) ./ 4
+    Y_q1 = (3 .* Y[I_real] .+ Y[J_real]) ./ 4
+    X_q2 = (X[I_real] .+ X[J_real]) ./ 2
+    Y_q2 = (Y[I_real] .+ Y[J_real]) ./ 2
+    X_q3 = (X[I_real] .+ 3 .* X[J_real]) ./ 4
+    Y_q3 = (Y[I_real] .+ 3 .* Y[J_real]) ./ 4
+
+    X_diff = (X[J_real] .- X[I_real]) ./ 2
+    Y_diff = (Y[J_real] .- Y[I_real]) ./ 2
+
+    X_q1 .+= Y_diff .* offset_ratio ./ 1.2
+    X_q2 .+= Y_diff .* offset_ratio
+    X_q3 .+= Y_diff .* offset_ratio ./ 1.2
+    Y_q1 .-= X_diff .* offset_ratio ./ 1.2
+    Y_q2 .-= X_diff .* offset_ratio
+    Y_q3 .-= X_diff .* offset_ratio ./ 1.2
+
+    real_q1_points = Point2f.(X_q1, Y_q1)
+    real_q2_points = Point2f.(X_q2, Y_q2)
+    real_q3_points = Point2f.(X_q3, Y_q3)
     real_point_couples = collect(zip(real_start_points, real_end_points))
+    real_point_couples_q0_q1 = collect(zip(real_start_points, real_q1_points))
+    real_point_couples_q1_q2 = collect(zip(real_q1_points, real_q2_points))
+    real_point_couples_q2_q3 = collect(zip(real_q2_points, real_q3_points))
+    real_point_couples_q3_q4 = collect(zip(real_q3_points, real_end_points))
 
     zone_points = Point2f.(X[zone_nodes], Y[zone_nodes])
     zone_start_points = Point2f.(X[I_zone], Y[I_zone])
@@ -76,14 +84,12 @@ function TrafficAssignment.plot_network(
 
     if !isnothing(edge_quantity)
         if edge_quantity_type == :flow
-            flow = edge_quantity
+            flow = getindex.(Ref(edge_quantity), I_real, J_real)
+            capacity = getindex.(Ref(link_capacity), I_real, J_real)
             # linewidth ∝ flow
-            segment_linewidth_real = aggregate_symmetric(flow, I_real, J_real, max)
-            segment_linewidth_real .*= 7 ./ maximum(segment_linewidth_real)
+            segment_linewidth_real = 7 .* flow ./ maximum(flow)
             # color ∝ flow / capacity
-            segment_color_real = aggregate_symmetric_normalized(
-                flow, link_capacity, I_real, J_real, max
-            )
+            segment_color_real = flow ./ capacity
             segment_colormap = vcat(
                 range(HSL(colorant"green"); stop=HSL(colorant"yellow"), length=4),
                 range(HSL(colorant"yellow"); stop=HSL(colorant"red"), length=4)[2:end],
@@ -138,20 +144,29 @@ function TrafficAssignment.plot_network(
         visible=lift(&, show_zones.active, show_network.active),
     )
 
-    ls_color_real = if !isnothing(edge_quantity)
-        ls_color_real = linesegments!(
-            ax,
-            real_point_couples;
-            linecap=:round,
-            linewidth=segment_linewidth_real,
-            color=segment_color_real,
-            colorrange=segment_colorrange,
-            colormap=segment_colormap,
-            visible=lift(identity, show_edge_quantity.active),
+    ls_to_shift = []
+    if !isnothing(edge_quantity)
+        for couples in (
+            real_point_couples_q0_q1, #
+            real_point_couples_q1_q2, #
+            real_point_couples_q2_q3, #
+            real_point_couples_q3_q4, #
         )
+            ls = linesegments!(
+                ax,
+                couples;
+                linecap=:round,
+                linewidth=segment_linewidth_real,
+                color=segment_color_real,
+                colorrange=segment_colorrange,
+                colormap=segment_colormap,
+                visible=lift(identity, show_edge_quantity.active),
+            )
+            push!(ls_to_shift, ls)
+        end
         Colorbar(
             fig[1, 5],
-            ls_color_real;
+            ls_to_shift[1];
             label=if edge_quantity_type == :flow
                 "Link congestion (flow / capacity)"
             else
@@ -159,7 +174,6 @@ function TrafficAssignment.plot_network(
             end,
             tellheight=false,
         )
-        ls_color_real
     else
         nothing
     end
@@ -181,7 +195,11 @@ function TrafficAssignment.plot_network(
         translate!(ls_zone, 0, 0, 10)
         translate!(sc_real, 0, 0, 10)
         translate!(sc_zone, 0, 0, 10)
-        !isnothing(edge_quantity) && translate!(ls_color_real, 0, 0, 10)
+        if !isnothing(edge_quantity)
+            for ls in to_shift
+                translate!(ls, 0, 0, 10)
+            end
+        end
     end
 
     if !tiles
