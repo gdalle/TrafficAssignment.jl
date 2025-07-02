@@ -31,7 +31,7 @@ end
 function TrafficAssignment.plot_network(
     problem::TrafficAssignmentProblem,
     edge_quantity::Union{Nothing,SparseMatrixCSC}=nothing;
-    edge_quantity_type=:flow,
+    edge_quantity_type=isnothing(edge_quantity) ? nothing : :flow,
     nodes=false,
     zones=false,
     tiles=false,
@@ -74,24 +74,36 @@ function TrafficAssignment.plot_network(
     zone_end_points = Point2f.(X[J_zone], Y[J_zone])
     zone_point_couples = collect(zip(zone_start_points, zone_end_points))
 
-    if !isnothing(edge_quantity)
-        if edge_quantity_type == :flow
-            flow = edge_quantity
-            # linewidth ∝ flow
-            segment_linewidth_real = aggregate_symmetric(flow, I_real, J_real, max)
-            segment_linewidth_real .*= 7 ./ maximum(segment_linewidth_real)
-            # color ∝ flow / capacity
-            segment_color_real = aggregate_symmetric_normalized(
-                flow, link_capacity, I_real, J_real, max
-            )
-            segment_colormap = vcat(
-                range(HSL(colorant"green"); stop=HSL(colorant"yellow"), length=4),
-                range(HSL(colorant"yellow"); stop=HSL(colorant"red"), length=4)[2:end],
-            )
-            segment_colorrange = (0, 2)
-        else
-            throw(ArgumentError("Edge quantity of type $edge_quantity_type not supported"))
-        end
+    local segment_linewidth_real = nothing
+    local segment_color_real = nothing
+    local segment_colormap = nothing
+    local segment_colorrange = nothing
+    if edge_quantity_type == :flow
+        flow = edge_quantity
+        # linewidth ∝ flow
+        segment_linewidth_real = aggregate_symmetric(flow, I_real, J_real, max)
+        segment_linewidth_real .*= 7 ./ maximum(segment_linewidth_real)
+        # color ∝ flow / capacity
+        segment_color_real = aggregate_symmetric_normalized(
+            flow, link_capacity, I_real, J_real, max
+        )
+        segment_colormap = vcat(
+            range(HSL(colorant"green"); stop=HSL(colorant"yellow"), length=4),
+            range(HSL(colorant"yellow"); stop=HSL(colorant"red"), length=4)[2:end],
+        )
+        segment_colorrange = (0, 2)
+    elseif edge_quantity_type == :gradient
+        grad = edge_quantity
+        # linewidth ∝ abs gradient
+        segment_linewidth_real = aggregate_symmetric(
+            grad, I_real, J_real, (x, y) -> max(abs(x), abs(y))
+        )
+        segment_linewidth_real .*= 7 ./ maximum(segment_linewidth_real)
+        segment_color_real = :black
+        segment_colormap = nothing
+        segment_colorrange = nothing
+    else
+        error("Edge quantity not supported")
     end
 
     # figure size
@@ -138,7 +150,7 @@ function TrafficAssignment.plot_network(
         visible=lift(&, show_zones.active, show_network.active),
     )
 
-    ls_color_real = if !isnothing(edge_quantity)
+    ls_color_real = if edge_quantity_type == :flow
         ls_color_real = linesegments!(
             ax,
             real_point_couples;
@@ -160,6 +172,15 @@ function TrafficAssignment.plot_network(
             tellheight=false,
         )
         ls_color_real
+    elseif edge_quantity_type == :gradient
+        linesegments!(
+            ax,
+            real_point_couples;
+            linecap=:round,
+            linewidth=segment_linewidth_real,
+            color=segment_color_real,
+            visible=lift(identity, show_edge_quantity.active),
+        )
     else
         nothing
     end

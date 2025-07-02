@@ -7,6 +7,7 @@ using TrafficAssignment
 import TrafficAssignment as TA
 using Zygote
 using ForwardDiff
+using GLMakie
 
 problem = TrafficAssignmentProblem(TransportationNetworks, "SiouxFalls")
 
@@ -28,23 +29,24 @@ dfw = DiffFW(
     f,
     f_grad1,
     lmo;
-    representation=OperatorRepresentation(),
-    linear_solver=IterativeLinearSolver(),
+    step_size=1e-5,
+    implicit_kwargs=(;
+        representation=MatrixRepresentation(), linear_solver=DirectLinearSolver()
+    ),
 )
 callback = TA.RelativeGapCallback(1e-4)
 
 x0 = nonzeros(flow)
 θ = nonzeros(problem.link_capacity)
-θ_and_dθ = ForwardDiff.Dual.(θ, 1e3 .* rand(length(θ)))
 
 function todiff(_θ; kwargs...)
     _f_vec = dfw(_θ, x0; callback, kwargs...)
     return TA._objective_vec(problem, Val(:centralized), _f_vec)
 end
 
-todiff(θ_and_dθ; away_steps=false)
-
 ∇θ = ForwardDiff.gradient(todiff, θ)
-∇θ = Zygote.gradient(todiff, θ)
 
-capa_grad = Matrix(TA.sparse_by_link(problem, ∇θ))
+capa_grad = TA.sparse_by_link(problem, ∇θ)
+
+plot_network(problem, flow; edge_quantity_type=:flow)
+plot_network(problem, capa_grad; edge_quantity_type=:gradient)
