@@ -1,11 +1,14 @@
 using Accessors
+using ImplicitDifferentiation
 using DifferentiableFrankWolfe
+using FrankWolfe
 using SparseArrays
 using TrafficAssignment
 import TrafficAssignment as TA
 using Zygote
+using ForwardDiff
 
-problem = TrafficAssignmentProblem("TransportationNetworks", "SiouxFalls")
+problem = TrafficAssignmentProblem(TransportationNetworks, "SiouxFalls")
 
 flow = solve_frank_wolfe(problem, Val(:equilibrium))
 
@@ -21,19 +24,27 @@ end
 
 lmo = TA.ShortestPathOracle(problem)
 
-dfw = DiffFW(f, f_grad1, lmo)
+dfw = DiffFW(
+    f,
+    f_grad1,
+    lmo;
+    representation=OperatorRepresentation(),
+    linear_solver=IterativeLinearSolver(),
+)
 callback = TA.RelativeGapCallback(1e-4)
 
 x0 = nonzeros(flow)
 θ = nonzeros(problem.link_capacity)
-function todiff(_θ)
-    _f_vec = dfw(_θ, x0; callback)
+θ_and_dθ = ForwardDiff.Dual.(θ, 1e3 .* rand(length(θ)))
+
+function todiff(_θ; kwargs...)
+    _f_vec = dfw(_θ, x0; callback, kwargs...)
     return TA._objective_vec(problem, Val(:centralized), _f_vec)
 end
 
-∇θ = Zygote.gradient(todiff, θ)[1]
-@profview for _ in 1:1000
-    Zygote.gradient(todiff, θ)[1]
-end
+todiff(θ_and_dθ; away_steps=false)
 
-capa_grad = TA.sparse_by_link(problem, ∇θ)
+∇θ = ForwardDiff.gradient(todiff, θ)
+∇θ = Zygote.gradient(todiff, θ)
+
+capa_grad = Matrix(TA.sparse_by_link(problem, ∇θ))

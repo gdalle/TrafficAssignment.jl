@@ -12,10 +12,11 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 TrafficAssignment = "735ffce8-66c7-5b61-a90f-89c46d1a79d5"
 Zygote = "e88e6eb3-aa80-5325-afca-941959d7151f"
 
+[sources]
+TrafficAssignment = {path = "../.."}
+
 [compat]
 Accessors = "0.1.42"
-DifferentiableFrankWolfe = "0.5.0"
 FrankWolfe = "0.5.1"
-ImplicitDifferentiation = "0.8.0"
 SparseArrays = "1.11.0"
 Zygote = "0.7.9"
