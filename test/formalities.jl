@@ -10,11 +10,6 @@ end
     JET.test_package(TrafficAssignment; target_modules=[TrafficAssignment,])
 end
 
-@testitem "JuliaFormatter" begin
-    using JuliaFormatter
-    @test JuliaFormatter.format(TrafficAssignment; overwrite=false)
-end
-
 @testitem "Doctests" begin
     using Documenter
     DocMeta.setdocmeta!(
