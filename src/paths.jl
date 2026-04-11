@@ -17,7 +17,7 @@ end
 
 function reset!(storage::DijkstraStorage{W,T}) where {W,T}
     (; heap, parents, edge_ids, dists) = storage
-    empty!(heap.valtree)  # internal, will be released in DataStructures v0.19
+    empty!(heap)
     fill!(parents, zero(T))
     fill!(edge_ids, zero(T))
     fill!(dists, typemax(W))
