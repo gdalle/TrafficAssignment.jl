@@ -7,7 +7,7 @@ end
 
 @testitem "JET" begin
     using JET
-    JET.test_package(TrafficAssignment; target_defined_modules=true)
+    JET.test_package(TrafficAssignment; target_modules=[TrafficAssignment,])
 end
 
 @testitem "JuliaFormatter" begin
