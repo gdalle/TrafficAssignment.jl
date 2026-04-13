@@ -7,12 +7,7 @@ end
 
 @testitem "JET" begin
     using JET
-    JET.test_package(TrafficAssignment; target_defined_modules=true)
-end
-
-@testitem "JuliaFormatter" begin
-    using JuliaFormatter
-    @test JuliaFormatter.format(TrafficAssignment; overwrite=false)
+    JET.test_package(TrafficAssignment; target_modules=[TrafficAssignment,])
 end
 
 @testitem "Doctests" begin

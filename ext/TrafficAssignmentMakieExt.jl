@@ -87,7 +87,9 @@ function TrafficAssignment.plot_network(
             flow = getindex.(Ref(edge_quantity), I_real, J_real)
             capacity = getindex.(Ref(link_capacity), I_real, J_real)
             # linewidth ∝ flow
-            segment_linewidth_real = 7 .* flow ./ maximum(flow)
+            segment_linewidth_real = 2
+            # TODO: toggle once error is fixed: "Cairo doesn't support two different line widths (1.3642795 and 2.4439764 at the endpoints of a line)."
+            # segment_linewidth_real = 7 .* flow ./ maximum(flow)
             # color ∝ flow / capacity
             segment_color_real = flow ./ capacity
             segment_colormap = vcat(

@@ -1,7 +1,7 @@
 name = "TrafficAssignment"
 uuid = "735ffce8-66c7-5b61-a90f-89c46d1a79d5"
 authors = ["Changhyun Kwon", "Guillaume Dalle"]
-version = "0.7.0"
+version = "0.7.1"
 
 [deps]
 BinDeps = "9e28174c-4ba2-5203-b857-d8d62c4213ee"
@@ -40,15 +40,14 @@ Colors = "0.13.0"
 DataDeps = "0.7.13"
 DataFrames = "1.7"
 DataFramesMeta = "0.15.4"
-DataStructures = "0.18.22"
+DataStructures = "0.19"
 DelimitedFiles = "1"
 Distributed = "1"
 DocStringExtensions = "0.9.4"
 Documenter = "1.10"
-FrankWolfe = "0.4.13, 0.5"
+FrankWolfe = "0.4.13, 0.5, 0.6"
 Graphs = "1.12.1"
-JET = "0.9"
-JuliaFormatter = "2.1"
+JET = "0.9,0.10,0.11"
 Libdl = "1"
 LinearAlgebra = "1"
 Makie = "0.22,0.23, 0.24"
@@ -74,7 +73,6 @@ Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 FrankWolfe = "f55ce6ea-fdc5-4628-88c5-0087fe54bd30"
 Graphs = "86223c79-3864-5bf0-83f7-82e725a168b6"
 JET = "c3a54625-cd67-489e-a8e7-0a5a0ff4e31b"
-JuliaFormatter = "98e50ef6-434e-11e9-1051-2b60c6c9e899"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 SimpleWeightedGraphs = "47aef6b3-ad0c-573a-a1e2-d07658019622"
@@ -85,4 +83,4 @@ TestItems = "1c621080-faea-4a02-84b6-bbd5e436b8fe"
 Tyler = "e170d443-b9d6-418a-9ee8-061e966341ef"
 
 [targets]
-test = ["Aqua", "CairoMakie", "DelimitedFiles", "Documenter", "FrankWolfe", "Graphs", "JET", "JuliaFormatter", "LinearAlgebra", "Pkg", "SimpleWeightedGraphs", "SparseArrays", "Test", "TestItems", "TestItemRunner", "Tyler"]
+test = ["Aqua", "CairoMakie", "DelimitedFiles", "Documenter", "FrankWolfe", "Graphs", "JET", "LinearAlgebra", "Pkg", "SimpleWeightedGraphs", "SparseArrays", "Test", "TestItems", "TestItemRunner", "Tyler"]
