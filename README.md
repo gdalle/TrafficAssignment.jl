@@ -11,10 +11,10 @@ This is a Julia package for studying [traffic assignment](https://en.wikipedia.o
 
 ## Getting started
 
-To install the latest development version, run this in your Julia Pkg REPL:
+To install the latest stable version, run this in your Julia Pkg REPL:
 
 ```julia
-pkg> add https://github.com/gdalle/TrafficAssignment.jl
+pkg> add TrafficAssignment
 ```
 
 Check out the [documentation](https://gdalle.github.io/TrafficAssignment.jl/dev/) to know what to do next.
