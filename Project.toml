@@ -1,7 +1,7 @@
 name = "TrafficAssignment"
 uuid = "735ffce8-66c7-5b61-a90f-89c46d1a79d5"
 authors = ["Changhyun Kwon", "Guillaume Dalle"]
-version = "0.7.1"
+version = "0.7.0"
 
 [deps]
 BinDeps = "9e28174c-4ba2-5203-b857-d8d62c4213ee"
