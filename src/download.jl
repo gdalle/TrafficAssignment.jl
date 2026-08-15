@@ -15,7 +15,7 @@ function __init__()
         message1,
         remote_path1,
         hash1;
-        fetch_method=DataDeps.fetch_default,
+        fetch_method=DataDeps.fetch,
         post_fetch_method=zip_file -> begin
             DataDeps.unpack(zip_file; keep_originals=false)
             # decompress potential zip files inside each instance
@@ -47,7 +47,7 @@ function __init__()
         message2,
         remote_path2,
         hash2;
-        fetch_method=DataDeps.fetch_default,
+        fetch_method=DataDeps.fetch,
         post_fetch_method=DataDeps.unpack,
     )
     DataDeps.register(datadep2)
