@@ -34,7 +34,7 @@ TrafficAssignmentTylerExt = ["Makie", "Tyler"]
 [compat]
 Aqua = "0.8.12"
 BinDeps = "1.0.2"
-CSV = "0.10.15"
+CSV = "0.10.15, 1.1"
 CairoMakie = "0.13.4"
 Colors = "0.13.0"
 DataDeps = "0.7.13, 1.0"
